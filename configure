@@ -631,6 +631,8 @@ BUILD_PY_FALSE
 BUILD_PY_TRUE
 BUILD_GEO_FALSE
 BUILD_GEO_TRUE
+BUILD_ERR_FALSE
+BUILD_ERR_TRUE
 BUILD_SOL_FALSE
 BUILD_SOL_TRUE
 BUILD_DEF_FALSE
@@ -837,6 +839,7 @@ enable_DOT
 enable_MSH
 enable_DEF
 enable_SOL
+enable_ERR
 enable_GEO
 enable_PY_WRAPPER
 enable_complex
@@ -1500,6 +1503,7 @@ Optional Features:
   --disable-MSH           build the SU2_MSH executable (default = yes)
   --disable-DEF           build the SU2_DEF executable (default = yes)
   --disable-SOL           build the SU2_SOL executable (default = yes)
+  --disable-ERR           build the SU2_ERR executable (default = yes)
   --disable-GEO           build the SU2_GEO executable (default = yes)
   --enable-PY_WRAPPER     wrap the SU2 code with Python (default = no)
   --enable-complex        build executables with complex datatype (default =
@@ -6048,6 +6052,13 @@ else
   build_SOL="yes"
 fi
 
+# Check whether --enable-ERR was given.
+if test "${enable_ERR+set}" = set; then :
+  enableval=$enable_ERR; build_ERR=$enableval
+else
+  build_ERR="yes"
+fi
+
 # Check whether --enable-GEO was given.
 if test "${enable_GEO+set}" = set; then :
   enableval=$enable_GEO; build_GEO=$enableval
@@ -7236,6 +7247,7 @@ then
   build_MSH=no
   build_DEF=no
   build_SOL=no
+  build_ERR=no
   build_GEO=no
   build_PY=no
   build_PY_WRAPPER=no
@@ -7286,6 +7298,14 @@ fi
 else
   BUILD_SOL_TRUE='#'
   BUILD_SOL_FALSE=
+fi
+
+ if test $build_ERR != "no"; then
+  BUILD_ERR_TRUE=
+  BUILD_ERR_FALSE='#'
+else
+  BUILD_ERR_TRUE='#'
+  BUILD_ERR_FALSE=
 fi
 
  if test $build_GEO != "no"; then
@@ -7588,6 +7608,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${BUILD_SOL_TRUE}" && test -z "${BUILD_SOL_FALSE}"; then
   as_fn_error $? "conditional \"BUILD_SOL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${BUILD_ERR_TRUE}" && test -z "${BUILD_ERR_FALSE}"; then
+  as_fn_error $? "conditional \"BUILD_ERR\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${BUILD_GEO_TRUE}" && test -z "${BUILD_GEO_FALSE}"; then
@@ -8833,6 +8857,7 @@ Build Configuration Summary:
     Build SU2_MSH:        $build_MSH
     Build SU2_DEF:        $build_DEF
     Build SU2_SOL:        $build_SOL
+    Build SU2_ERR:        $build_ERR
     Build SU2_GEO:        $build_GEO
     Build Py Wrapper:     $build_PY_WRAPPER
 
@@ -8923,6 +8948,7 @@ Build Configuration Summary:
     Build SU2_MSH:        $build_MSH
     Build SU2_DEF:        $build_DEF
     Build SU2_SOL:        $build_SOL
+    Build SU2_ERR:        $build_ERR
     Build SU2_GEO:        $build_GEO
     Build Py Wrapper:     $build_PY_WRAPPER
 

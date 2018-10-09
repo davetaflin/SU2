@@ -150,6 +150,9 @@ AC_ARG_ENABLE(DEF,
 AC_ARG_ENABLE(SOL,
    	AS_HELP_STRING([--disable-SOL], [build the SU2_SOL executable (default = yes)]),
 	[build_SOL=$enableval], [build_SOL="yes"])
+AC_ARG_ENABLE(ERR,
+    AS_HELP_STRING([--disable-ERR], [build the SU2_ERR executable (default = yes)]),
+  [build_ERR=$enableval], [build_ERR="yes"])
 AC_ARG_ENABLE(GEO,
    	AS_HELP_STRING([--disable-GEO], [build the SU2_GEO executable (default = yes)]),
 	[build_GEO=$enableval], [build_GEO="yes"])
@@ -534,6 +537,7 @@ then
   build_MSH=no
   build_DEF=no
   build_SOL=no
+  build_ERR=no
   build_GEO=no
   build_PY=no
   build_PY_WRAPPER=no
@@ -551,6 +555,7 @@ AM_CONDITIONAL([BUILD_DOT],[test $build_DOT != "no"])
 AM_CONDITIONAL([BUILD_MSH],[test $build_MSH != "no"])
 AM_CONDITIONAL([BUILD_DEF],[test $build_DEF != "no"])
 AM_CONDITIONAL([BUILD_SOL],[test $build_SOL != "no"])
+AM_CONDITIONAL([BUILD_ERR],[test $build_ERR != "no"])
 AM_CONDITIONAL([BUILD_GEO],[test $build_GEO != "no"])
 AM_CONDITIONAL([BUILD_PY],[test $build_PY != "no"])
 AM_CONDITIONAL([BUILD_PY_WRAPPER], [test $build_PY_WRAPPER != "no"])
@@ -649,6 +654,7 @@ Build Configuration Summary:
     Build SU2_MSH:        $build_MSH
     Build SU2_DEF:        $build_DEF
     Build SU2_SOL:        $build_SOL
+    Build SU2_ERR:        $build_ERR
     Build SU2_GEO:        $build_GEO
     Build Py Wrapper:     $build_PY_WRAPPER
 
