@@ -2793,7 +2793,7 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
    movement (both rotating frame and moving walls can be steady), make sure that
    there is no grid motion ---*/
   
-  if ((Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_SOL) &&
+  if ((Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_SOL || Kind_SU2 == SU2_ERR) &&
       (Unsteady_Simulation == STEADY) &&
       ((Kind_GridMovement[ZONE_0] != MOVING_WALL) &&
        (Kind_GridMovement[ZONE_0] != ROTATING_FRAME) &&
@@ -2801,7 +2801,7 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
        (Kind_GridMovement[ZONE_0] != FLUID_STRUCTURE)))
     Grid_Movement = false;
   
-  if ((Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_SOL) &&
+  if ((Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_SOL || Kind_SU2 == SU2_ERR) &&
       (Unsteady_Simulation == STEADY) &&
       ((Kind_GridMovement[ZONE_0] == MOVING_HTP)))
     Grid_Movement = true;
@@ -3544,7 +3544,7 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
 	Electric_Field_Dir = new su2double[2]; Electric_Field_Dir[0] = 0.0;  Electric_Field_Dir[1] = 1.0;
   }
 
-  if ((Kind_SU2 == SU2_CFD) && (Kind_Solver == NO_SOLVER)) {
+  if ((Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_ERR) && (Kind_Solver == NO_SOLVER)) {
     SU2_MPI::Error("PHYSICAL_PROBLEM must be set in the configuration file", CURRENT_FUNCTION);
   }
   
@@ -3580,7 +3580,7 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
   /*--- Re-scale the length based parameters. The US system uses feet,
    but SU2 assumes that the grid is in inches ---*/
   
-  if ((SystemMeasurements == US) && (Kind_SU2 == SU2_CFD)) {
+  if ((SystemMeasurements == US) && (Kind_SU2 == SU2_CFD || Kind_SU2 == SU2_ERR)) {
     
     for (iMarker = 0; iMarker < nMarker_Monitoring; iMarker++) {
       RefOriginMoment_X[iMarker] = RefOriginMoment_X[iMarker]/12.0;
@@ -4471,6 +4471,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
     case SU2_MSH: cout << "|   |___/\\___//___|   Suite (Mesh Adaptation Code)                      |" << endl; break;
     case SU2_GEO: cout << "|   |___/\\___//___|   Suite (Geometry Definition Code)                  |" << endl; break;
     case SU2_SOL: cout << "|   |___/\\___//___|   Suite (Solution Exporting Code)                   |" << endl; break;
+    case SU2_ERR: cout << "|   |___/\\___//___|   Suite (Error Estimation Code)                     |" << endl; break;
   }
 
   cout << "|                                                                       |" << endl;
@@ -4508,7 +4509,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
   cout <<"-------------------------------------------------------------------------" << endl;
 
   cout << endl <<"------------------------ Physical Case Definition -----------------------" << endl;
-  if (val_software == SU2_CFD) {
+  if (val_software == SU2_CFD || val_software == SU2_ERR) {
 	if (FSI_Problem) {
 	   cout << "Fluid-Structure Interaction." << endl;
 	}
@@ -4966,7 +4967,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
 		}
 	}
 
-	if (((val_software == SU2_CFD) && ( ContinuousAdjoint || DiscreteAdjoint)) || (val_software == SU2_DOT)) {
+	if (((val_software == SU2_CFD || val_software == SU2_ERR) && ( ContinuousAdjoint || DiscreteAdjoint)) || (val_software == SU2_DOT)) {
 
 		cout << endl <<"----------------------- Design problem definition -----------------------" << endl;
 		if (nObj==1) {
@@ -5018,7 +5019,7 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
 
 	}
 
-	if (val_software == SU2_CFD) {
+	if (val_software == SU2_CFD || val_software == SU2_ERR) {
 		cout << endl <<"---------------------- Space Numerical Integration ----------------------" << endl;
 
 		if (SmoothNumGrid) cout << "There are some smoothing iterations on the grid coordinates." << endl;

@@ -1970,7 +1970,7 @@ CPhysicalGeometry::CPhysicalGeometry(CConfig *config, unsigned short val_iZone, 
   
   /*--- Loop over the points element to re-scale the mesh, and plot it (only SU2_CFD) ---*/
   
-  if (config->GetKind_SU2() == SU2_CFD) {
+  if (config->GetKind_SU2() == SU2_CFD || config->GetKind_SU2() == SU2_ERR) {
     
     NewCoord = new su2double [nDim];
     
@@ -8549,7 +8549,7 @@ void CPhysicalGeometry::Read_SU2_Format_Parallel(CConfig *config, string val_mes
   bool harmonic_balance = config->GetUnsteady_Simulation() == HARMONIC_BALANCE;
   bool actuator_disk  = (((config->GetnMarker_ActDiskInlet() != 0) ||
                           (config->GetnMarker_ActDiskOutlet() != 0)) &&
-                         ((config->GetKind_SU2() == SU2_CFD) ||
+                         ((config->GetKind_SU2() == SU2_CFD || config->GetKind_SU2() == SU2_ERR) ||
                           ((config->GetKind_SU2() == SU2_DEF) && (config->GetActDisk_SU2_DEF()))));
   if (config->GetActDisk_DoubleSurface()) actuator_disk = false;
 

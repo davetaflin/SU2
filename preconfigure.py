@@ -476,7 +476,7 @@ def configure(argument_dict,
               '\tSU2_DEF            -> Mesh Deformation Code.\n'  \
               '\tSU2_MSH            -> Mesh Adaption Code.\n' \
               '\tSU2_SOL            -> Solution Export Code.\n' \
-              '\tSU2_ERR            -> Error Computation Code.\n' \
+              '\tSU2_ERR            -> Error Estimation Code.\n' \
               '\tSU2_GEO            -> Geometry Definition Code.\n')
     if modes['SU2_AD']:
         print('\tSU2_CFD_AD         -> Discrete Adjoint Solver and general AD support.')
