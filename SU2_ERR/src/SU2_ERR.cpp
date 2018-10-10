@@ -1,7 +1,7 @@
 /*!
  * \file SU2_ERR.cpp
  * \brief Main file for the error computation code (SU2_ERR).
- * \author F. Palacios, T. Economon
+ * \author B. Munguía
  * \version 6.1.0 "Falcon"
  *
  * The current SU2 release has been coordinated by the
