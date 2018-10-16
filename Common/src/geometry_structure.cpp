@@ -1946,6 +1946,12 @@ CPhysicalGeometry::CPhysicalGeometry(CConfig *config, unsigned short val_iZone, 
   
   string val_mesh_filename  = config->GetMesh_FileName();
   unsigned short val_format = config->GetMesh_FileFormat();
+    
+  /*--- For error computation, read in fine mesh, currently stored in MESH_OUT_FILENAME ---*/
+  if(config->GetKind_SU2() == SU2_ERR){
+      val_mesh_filename = config->GetMesh_Out_FileName();
+      val_format = SU2;
+  }
 
   /*--- Initialize counters for local/global points & elements ---*/
   

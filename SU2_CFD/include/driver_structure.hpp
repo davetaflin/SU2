@@ -120,6 +120,13 @@ public:
           unsigned short val_nDim,
           bool val_periodic,
           SU2_Comm MPICommunicator);
+    
+  CDriver(CConfig** config_aux,
+          CGeometry**** geometry_aux,
+          unsigned short val_nZone,
+          unsigned short val_nDim,
+          bool val_periodic,
+          SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -677,6 +684,13 @@ public:
                  unsigned short val_nDim,
                  bool val_periodic,
                  SU2_Comm MPICommunicator);
+    
+  CGeneralDriver(CConfig** config_aux,
+            CGeometry**** geometry_aux,
+            unsigned short val_nZone,
+            unsigned short val_nDim,
+            bool val_periodic,
+            SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -737,6 +751,13 @@ public:
    * \param[in] MPICommunicator - MPI communicator for SU2.
    */
   CFluidDriver(char* confFile,
+               unsigned short val_nZone,
+               unsigned short val_nDim,
+               bool val_periodic,
+               SU2_Comm MPICommunicator);
+    
+  CFluidDriver(CConfig** config_aux,
+               CGeometry**** geometry_aux,
                unsigned short val_nZone,
                unsigned short val_nDim,
                bool val_periodic,
@@ -845,6 +866,14 @@ public:
                         unsigned short val_nDim,
                         bool val_periodic,
                         SU2_Comm MPICommunicator);
+    
+  CTurbomachineryDriver(CConfig** config_aux,
+               CGeometry**** geometry_aux,
+               unsigned short val_nZone,
+               unsigned short val_nDim,
+               bool val_periodic,
+               SU2_Comm MPICommunicator);
+
 
   /*!
    * \brief Destructor of the class.
@@ -904,6 +933,13 @@ public:
                    unsigned short val_nDim,
                    bool val_periodic,
                    SU2_Comm MPICommunicator);
+    
+  CDiscAdjFluidDriver(CConfig** config_aux,
+                      CGeometry**** geometry_aux,
+                      unsigned short val_nZone,
+                      unsigned short val_nDim,
+                      bool val_periodic,
+                      SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -961,6 +997,13 @@ public:
                    unsigned short val_nDim,
                    bool val_periodic,
                    SU2_Comm MPICommunicator);
+    
+  CDiscAdjTurbomachineryDriver(CConfig** config_aux,
+                        CGeometry**** geometry_aux,
+                        unsigned short val_nZone,
+                        unsigned short val_nDim,
+                        bool val_periodic,
+                        SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -1012,6 +1055,13 @@ public:
    * \param[in] MPICommunicator - MPI communicator for SU2.
    */
   CHBDriver(char* confFile,
+            unsigned short val_nZone,
+            unsigned short val_nDim,
+            bool val_periodic,
+            SU2_Comm MPICommunicator);
+    
+  CHBDriver(CConfig** config_aux,
+            CGeometry**** geometry_aux,
             unsigned short val_nZone,
             unsigned short val_nDim,
             bool val_periodic,
@@ -1091,6 +1141,15 @@ public:
              unsigned short val_nDim,
              bool val_periodic,
              SU2_Comm MPICommunicator);
+    
+  CFSIDriver(CConfig** config_aux,
+            CGeometry**** geometry_aux,
+            unsigned short val_nZone,
+            unsigned short val_nDim,
+            bool val_periodic,
+            SU2_Comm MPICommunicator);
+    
+  
 
   /*!
    * \brief Destructor of the class.
@@ -1213,6 +1272,13 @@ public:
                     unsigned short val_nDim,
                     bool val_periodic,
                     SU2_Comm MPICommunicator);
+    
+  CDiscAdjFSIDriver(CConfig** config_aux,
+            CGeometry**** geometry_aux,
+            unsigned short val_nZone,
+            unsigned short val_nDim,
+            bool val_periodic,
+            SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.
@@ -1454,6 +1520,13 @@ public:
                            unsigned short val_nDim,
                            bool val_periodic,
                            SU2_Comm MPICommunicator);
+    
+  CMultiphysicsZonalDriver(CConfig** config_aux,
+            CGeometry**** geometry_aux,
+            unsigned short val_nZone,
+            unsigned short val_nDim,
+            bool val_periodic,
+            SU2_Comm MPICommunicator);
 
   /*!
    * \brief Destructor of the class.

@@ -282,6 +282,50 @@ unsigned short CConfig::GetnDim(string val_mesh_filename, unsigned short val_for
   return (unsigned short) nDim;
 }
 
+unsigned long CConfig::GetnPoint(string val_mesh_filename, unsigned short val_format) {
+    
+    string text_line, Marker_Tag;
+    ifstream mesh_file;
+    long nPoint;
+    char cstr[200];
+    string::size_type position;
+    
+    /*--- Open grid file ---*/
+    
+    strcpy (cstr, val_mesh_filename.c_str());
+    mesh_file.open(cstr, ios::in);
+    
+    switch (val_format) {
+        case SU2:
+            
+            /*--- Read SU2 mesh file ---*/
+            
+            while ( !mesh_file.eof() ) {
+                
+                getline (mesh_file, text_line);
+                
+                /*--- Search for the "NDIM" keyword to see if there are multiple Zones ---*/
+                
+                position = text_line.find ("NPOIN=",0);
+                if (position != string::npos) {
+                    text_line.erase (0,6); nPoint = atoi(text_line.c_str());
+                }
+            }
+            break;
+            
+        case CGNS:
+            
+            SU2_MPI::Error("Error estimation currently requires a .su2 mesh.", CURRENT_FUNCTION);
+            
+            break;
+            
+    }
+    
+    mesh_file.close();
+    
+    return (unsigned long) nPoint;
+}
+
 bool CConfig::GetPeriodic(string val_mesh_filename,
                           unsigned short val_format,
                           CConfig *config) {

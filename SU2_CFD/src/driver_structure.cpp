@@ -580,6 +580,476 @@ CDriver::CDriver(char* confFile,
 
 }
 
+CDriver::CDriver(CConfig** config_aux,
+                 CGeometry**** geometry_aux,
+                 unsigned short val_nZone,
+                 unsigned short val_nDim,
+                 bool val_periodic,
+                 SU2_Comm MPICommunicator):StartTime(0.0), StopTime(0.0), UsedTime(0.0), ExtIter(0), nZone(val_nZone), nDim(val_nDim), StopCalc(false), fsi(false) {
+
+    unsigned short jZone, iSol;
+    unsigned short Kind_Grid_Movement;
+    bool initStaticMovement;
+    
+    SU2_MPI::SetComm(MPICommunicator);
+    
+    rank = SU2_MPI::GetRank();
+    size = SU2_MPI::GetSize();
+    
+    /*--- Start timer to track preprocessing for benchmarking. ---*/
+    
+#ifndef HAVE_MPI
+    StartTime = su2double(clock())/su2double(CLOCKS_PER_SEC);
+#else
+    StartTime = MPI_Wtime();
+#endif
+    
+    /*--- Create pointers to all of the classes that may be used throughout
+     the SU2_CFD code. In general, the pointers are instantiated down a
+     hierarchy over all zones, multigrid levels, equation sets, and equation
+     terms as described in the comments below. ---*/
+    
+    iteration_container            = NULL;
+    output                         = NULL;
+    integration_container          = NULL;
+    geometry_container             = NULL;
+    solver_container               = NULL;
+    numerics_container             = NULL;
+    config_container               = NULL;
+    surface_movement               = NULL;
+    grid_movement                  = NULL;
+    FFDBox                         = NULL;
+    interpolator_container         = NULL;
+    transfer_container             = NULL;
+    transfer_types                 = NULL;
+    nInst                          = NULL;
+    
+    
+    /*--- Definition and of the containers for all possible zones. ---*/
+    
+    iteration_container            = new CIteration**[nZone];
+    solver_container               = new CSolver****[nZone];
+    integration_container          = new CIntegration***[nZone];
+    numerics_container             = new CNumerics*****[nZone];
+    surface_movement               = new CSurfaceMovement*[nZone];
+    grid_movement                  = new CVolumetricMovement**[nZone];
+    FFDBox                         = new CFreeFormDefBox**[nZone];
+    interpolator_container         = new CInterpolator**[nZone];
+    transfer_container             = new CTransfer**[nZone];
+    transfer_types                 = new unsigned short*[nZone];
+    nInst                          = new unsigned short[nZone];
+    
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        solver_container[iZone]               = NULL;
+        integration_container[iZone]          = NULL;
+        numerics_container[iZone]             = NULL;
+        surface_movement[iZone]               = NULL;
+        grid_movement[iZone]                  = NULL;
+        FFDBox[iZone]                         = NULL;
+        interpolator_container[iZone]         = NULL;
+        transfer_container[iZone]             = NULL;
+        transfer_types[iZone]                 = new unsigned short[nZone];
+        nInst[iZone]                          = 1;
+    }
+    
+    /*--- We've already instantiated the geometry and config structures in SU2_ERR. ---*/
+    
+    config_container = config_aux;
+    geometry_container = geometry_aux;
+    
+    
+    /*--- Preprocessing of the geometry for all zones. In this routine, the edge-
+     based data structure is constructed, i.e. node and cell neighbors are
+     identified and linked, face areas and volumes of the dual mesh cells are
+     computed, and the multigrid levels are created using an agglomeration procedure. ---*/
+    
+    if (rank == MASTER_NODE)
+        cout << endl <<"------------------------- Geometry Preprocessing ------------------------" << endl;
+    
+    Geometrical_Preprocessing();
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
+            
+            /*--- Computation of wall distances for turbulence modeling ---*/
+            
+            if (rank == MASTER_NODE)
+                cout << "Computing wall distances." << endl;
+            
+            if ((config_container[iZone]->GetKind_Solver() == RANS) ||
+                (config_container[iZone]->GetKind_Solver() == ADJ_RANS) ||
+                (config_container[iZone]->GetKind_Solver() == DISC_ADJ_RANS))
+                geometry_container[iZone][iInst][MESH_0]->ComputeWall_Distance(config_container[iZone]);
+            
+            /*--- Computation of positive surface area in the z-plane which is used for
+             the calculation of force coefficient (non-dimensionalization). ---*/
+            
+            geometry_container[iZone][iInst][MESH_0]->SetPositive_ZArea(config_container[iZone]);
+            
+            /*--- Set the near-field, interface and actuator disk boundary conditions, if necessary. ---*/
+            
+            for (iMesh = 0; iMesh <= config_container[iZone]->GetnMGLevels(); iMesh++) {
+                geometry_container[iZone][iInst][iMesh]->MatchNearField(config_container[iZone]);
+                geometry_container[iZone][iInst][iMesh]->MatchInterface(config_container[iZone]);
+                geometry_container[iZone][iInst][iMesh]->MatchActuator_Disk(config_container[iZone]);
+            }
+            
+        }
+        
+    }
+    
+    /*--- If activated by the compile directive, perform a partition analysis. ---*/
+#if PARTITION
+    Partition_Analysis(geometry_container[ZONE_0][INST_0][MESH_0], config_container[ZONE_0]);
+#endif
+    
+    /*--- Output some information about the driver that has been instantiated for the problem. ---*/
+    
+    if (rank == MASTER_NODE)
+        cout << endl <<"------------------------- Driver information --------------------------" << endl;
+    
+    fsi = config_container[ZONE_0]->GetFSI_Simulation();
+    bool stat_fsi = ((config_container[ZONE_0]->GetDynamic_Analysis() == STATIC) && (config_container[ZONE_0]->GetUnsteady_Simulation() == STEADY));
+    bool disc_adj_fsi = (config_container[ZONE_0]->GetDiscrete_Adjoint());
+    
+    if ( (config_container[ZONE_0]->GetKind_Solver() == FEM_ELASTICITY ||
+          config_container[ZONE_0]->GetKind_Solver() == DISC_ADJ_FEM ||
+          config_container[ZONE_0]->GetKind_Solver() == POISSON_EQUATION ||
+          config_container[ZONE_0]->GetKind_Solver() == WAVE_EQUATION ||
+          config_container[ZONE_0]->GetKind_Solver() == HEAT_EQUATION) ) {
+        if (rank == MASTER_NODE) cout << "A General driver has been instantiated." << endl;
+    }
+    else if (config_container[ZONE_0]->GetUnsteady_Simulation() == HARMONIC_BALANCE) {
+        if (rank == MASTER_NODE) cout << "A Harmonic Balance driver has been instantiated." << endl;
+    }
+    else if (nZone == 2 && fsi) {
+        if (disc_adj_fsi) {
+            if (stat_fsi)
+                if (rank == MASTER_NODE) cout << "A Discrete-Adjoint driver for Fluid-Structure Interaction has been instantiated." << endl;
+        }
+        else{
+            if (stat_fsi){if (rank == MASTER_NODE) cout << "A Static Fluid-Structure Interaction driver has been instantiated." << endl;}
+            else{if (rank == MASTER_NODE) cout << "A Dynamic Fluid-Structure Interaction driver has been instantiated." << endl;}
+        }
+        
+    }
+    else if (config_container[ZONE_0]->GetBoolZoneSpecific()) {
+        if (rank == MASTER_NODE) {
+            cout << "A multi physical zones driver has been instantiated." << endl;
+            for(unsigned short iZone = 0; iZone < nZone; iZone++) {
+                
+                unsigned short Kind_Regime = config_container[iZone]->GetKind_Regime();
+                cout << "   Zone " << (iZone+1) << ": ";
+                
+                switch (config_container[iZone]->GetKind_Solver()) {
+                    case EULER: case DISC_ADJ_EULER:
+                        if (Kind_Regime == COMPRESSIBLE) cout << "Compressible Euler equations." << endl;
+                        if (Kind_Regime == INCOMPRESSIBLE) cout << "Incompressible Euler equations." << endl;
+                        break;
+                    case NAVIER_STOKES: case DISC_ADJ_NAVIER_STOKES:
+                        if (Kind_Regime == COMPRESSIBLE) cout << "Compressible Laminar Navier-Stokes' equations." << endl;
+                        if (Kind_Regime == INCOMPRESSIBLE) cout << "Incompressible Laminar Navier-Stokes' equations." << endl;
+                        break;
+                    case RANS: case DISC_ADJ_RANS:
+                        if (Kind_Regime == COMPRESSIBLE) cout << "Compressible RANS equations." << endl;
+                        if (Kind_Regime == INCOMPRESSIBLE) cout << "Incompressible RANS equations." << endl;
+                        break;
+                    case POISSON_EQUATION: cout << "Poisson equation." << endl; break;
+                    case WAVE_EQUATION: cout << "Wave equation." << endl; break;
+                    case HEAT_EQUATION: case HEAT_EQUATION_FVM: cout << "Heat equation." << endl; break;
+                    case FEM_ELASTICITY: case DISC_ADJ_FEM: cout << "Geometrically linear elasticity solver." << endl; break;
+                    case ADJ_EULER: cout << "Continuous Euler adjoint equations." << endl; break;
+                    case ADJ_NAVIER_STOKES: cout << "Continuous Navier-Stokes adjoint equations." << endl; break;
+                    case ADJ_RANS: cout << "Continuous RANS adjoint equations." << endl; break;
+                }
+            }
+        }
+    }
+    else {
+        if (rank == MASTER_NODE) cout << "A Fluid driver has been instantiated." << endl;
+    }
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        
+        /*--- Instantiate the type of physics iteration to be executed within each zone. For
+         example, one can execute the same physics across multiple zones (mixing plane),
+         different physics in different zones (fluid-structure interaction), or couple multiple
+         systems tightly within a single zone by creating a new iteration class (e.g., RANS). ---*/
+        
+        if (rank == MASTER_NODE) {
+            cout << endl <<"------------------------ Iteration Preprocessing ------------------------" << endl;
+        }
+        
+        iteration_container[iZone] = new CIteration* [nInst[iZone]];
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
+            iteration_container[iZone][iInst] = NULL;
+        }
+        
+        Iteration_Preprocessing();
+        
+        /*--- Definition of the solver class: solver_container[#ZONES][#INSTANCES][#MG_GRIDS][#EQ_SYSTEMS].
+         The solver classes are specific to a particular set of governing equations,
+         and they contain the subroutines with instructions for computing each spatial
+         term of the PDE, i.e. loops over the edges to compute convective and viscous
+         fluxes, loops over the nodes to compute source terms, and routines for
+         imposing various boundary condition type for the PDE. ---*/
+        
+        solver_container[iZone] = new CSolver*** [nInst[iZone]];
+        
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
+            solver_container[iZone][iInst] = NULL;
+            
+            if (rank == MASTER_NODE)
+                cout << endl <<"------------------------- Solver Preprocessing --------------------------" << endl;
+            
+            solver_container[iZone][iInst] = new CSolver** [config_container[iZone]->GetnMGLevels()+1];
+            for (iMesh = 0; iMesh <= config_container[iZone]->GetnMGLevels(); iMesh++)
+                solver_container[iZone][iInst][iMesh] = NULL;
+            
+            for (iMesh = 0; iMesh <= config_container[iZone]->GetnMGLevels(); iMesh++) {
+                solver_container[iZone][iInst][iMesh] = new CSolver* [MAX_SOLS];
+                for (iSol = 0; iSol < MAX_SOLS; iSol++)
+                    solver_container[iZone][iInst][iMesh][iSol] = NULL;
+            }
+            
+            Solver_Preprocessing(solver_container[iZone], geometry_container[iZone],
+                                 config_container[iZone], iInst);
+            
+        } // End of loop over iInst
+        
+        if (rank == MASTER_NODE)
+            cout << endl <<"----------------- Integration and Numerics Preprocessing ----------------" << endl;
+        
+        /*--- Definition of the integration class: integration_container[#ZONES][#INSTANCES][#EQ_SYSTEMS].
+         The integration class orchestrates the execution of the spatial integration
+         subroutines contained in the solver class (including multigrid) for computing
+         the residual at each node, R(U) and then integrates the equations to a
+         steady state or time-accurately. ---*/
+        
+        integration_container[iZone] = new CIntegration** [nInst[iZone]];
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
+            integration_container[iZone][iInst] = NULL;
+            
+            integration_container[iZone][iInst] = new CIntegration*[MAX_SOLS];
+            Integration_Preprocessing(integration_container[iZone], geometry_container[iZone],
+                                      config_container[iZone], iInst);
+        }
+        
+        if (rank == MASTER_NODE) cout << "Integration Preprocessing." << endl;
+        
+        /*--- Definition of the numerical method class:
+         numerics_container[#ZONES][#INSTANCES][#MG_GRIDS][#EQ_SYSTEMS][#EQ_TERMS].
+         The numerics class contains the implementation of the numerical methods for
+         evaluating convective or viscous fluxes between any two nodes in the edge-based
+         data structure (centered, upwind, galerkin), as well as any source terms
+         (piecewise constant reconstruction) evaluated in each dual mesh volume. ---*/
+        
+        numerics_container[iZone] = new CNumerics****[nInst[iZone]];
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
+            numerics_container[iZone][iInst] = NULL;
+            
+            numerics_container[iZone][iInst] = new CNumerics***[config_container[iZone]->GetnMGLevels()+1];
+            
+            Numerics_Preprocessing(numerics_container[iZone], solver_container[iZone],
+                                   geometry_container[iZone], config_container[iZone], iInst);
+        }
+        
+        if (rank == MASTER_NODE) cout << "Numerics Preprocessing." << endl;
+        
+    }
+    
+    /*--- Definition of the interface and transfer conditions between different zones.
+     *--- The transfer container is defined for zones paired one to one.
+     *--- This only works for a multizone FSI problem (nZone > 1).
+     *--- Also, at the moment this capability is limited to two zones (nZone < 3).
+     *--- This will change in the future. ---*/
+    
+    if ((rank == MASTER_NODE) && nZone > 1)
+        cout << endl <<"------------------- Multizone Interface Preprocessing -------------------" << endl;
+    
+    if ( nZone > 1 ) {
+        for (iZone = 0; iZone < nZone; iZone++){
+            transfer_container[iZone] = new CTransfer*[nZone];
+            interpolator_container[iZone] = new CInterpolator*[nZone];
+            for (jZone = 0; jZone < nZone; jZone++){
+                transfer_container[iZone][jZone]             = NULL;
+                interpolator_container[iZone][jZone]         = NULL;
+            }
+        }
+        Interface_Preprocessing();
+    }
+    
+    /*--- Instantiate the geometry movement classes for the solution of unsteady
+     flows on dynamic meshes, including rigid mesh transformations, dynamically
+     deforming meshes, and preprocessing of harmonic balance. ---*/
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        
+        grid_movement[iZone] = new CVolumetricMovement*[nInst[iZone]];
+        for (iInst = 0; iInst < nInst[iZone]; iInst++)
+            grid_movement[iZone][iInst] = NULL;
+        
+        if (config_container[iZone]->GetGrid_Movement() ||
+            (config_container[iZone]->GetDirectDiff() == D_DESIGN)) {
+            if (rank == MASTER_NODE)
+                cout << "Setting dynamic mesh structure for zone "<< iZone + 1<<"." << endl;
+            for (iInst = 0; iInst < nInst[iZone]; iInst++){
+                grid_movement[iZone][iInst] = new CVolumetricMovement(geometry_container[iZone][iInst][MESH_0], config_container[iZone]);
+            }
+            FFDBox[iZone] = new CFreeFormDefBox*[MAX_NUMBER_FFD];
+            surface_movement[iZone] = new CSurfaceMovement();
+            surface_movement[iZone]->CopyBoundary(geometry_container[iZone][INST_0][MESH_0], config_container[iZone]);
+            if (config_container[iZone]->GetUnsteady_Simulation() == HARMONIC_BALANCE){
+                for (iInst = 0; iInst < nInst[iZone]; iInst++){
+                    if (rank == MASTER_NODE) cout << endl <<  "Instance "<< iInst + 1 <<":" << endl;
+                    iteration_container[ZONE_0][iInst]->SetGrid_Movement(geometry_container, surface_movement, grid_movement, FFDBox, solver_container, config_container, ZONE_0, iInst, 0, 0);
+                }
+            }
+        }
+        
+        if (config_container[iZone]->GetDirectDiff() == D_DESIGN) {
+            if (rank == MASTER_NODE)
+                cout << "Setting surface/volume derivatives." << endl;
+            
+            /*--- Set the surface derivatives, i.e. the derivative of the surface mesh nodes with respect to the design variables ---*/
+            
+            surface_movement[iZone]->SetSurface_Derivative(geometry_container[iZone][INST_0][MESH_0],config_container[iZone]);
+            
+            /*--- Call the volume deformation routine with derivative mode enabled.
+             This computes the derivative of the volume mesh with respect to the surface nodes ---*/
+            
+            for (iInst = 0; iInst < nInst[iZone]; iInst++){
+                grid_movement[iZone][iInst]->SetVolume_Deformation(geometry_container[iZone][iInst][MESH_0],config_container[iZone], true, true);
+                
+                /*--- Update the multi-grid structure to propagate the derivative information to the coarser levels ---*/
+                
+                geometry_container[iZone][iInst][MESH_0]->UpdateGeometry(geometry_container[iZone][INST_0],config_container[iZone]);
+                
+                /*--- Set the derivative of the wall-distance with respect to the surface nodes ---*/
+                
+                if ( (config_container[iZone]->GetKind_Solver() == RANS) ||
+                    (config_container[iZone]->GetKind_Solver() == ADJ_RANS) ||
+                    (config_container[iZone]->GetKind_Solver() == DISC_ADJ_RANS))
+                    geometry_container[iZone][iInst][MESH_0]->ComputeWall_Distance(config_container[iZone]);
+            }
+        }
+        
+        if (config_container[iZone]->GetKind_GridMovement(iZone) == FLUID_STRUCTURE_STATIC){
+            if (rank == MASTER_NODE)
+                cout << "Setting moving mesh structure for static FSI problems." << endl;
+            /*--- Instantiate the container for the grid movement structure ---*/
+            for (iInst = 0; iInst < nInst[iZone]; iInst++)
+                grid_movement[iZone][iInst] = new CElasticityMovement(geometry_container[iZone][iInst][MESH_0], config_container[iZone]);
+        }
+        
+    }
+    
+    if(fsi && (config_container[ZONE_0]->GetRestart() || config_container[ZONE_0]->GetDiscrete_Adjoint())){
+        if (rank == MASTER_NODE)cout << endl <<"Restarting Fluid and Structural Solvers." << endl;
+        
+        for (iZone = 0; iZone < nZone; iZone++) {
+            for (iInst = 0; iInst < nInst[iZone]; iInst++){
+                Solver_Restart(solver_container[iZone], geometry_container[iZone],
+                               config_container[iZone], true, iInst);
+            }
+        }
+        
+    }
+    
+    /*---If the Grid Movement is static initialize the static mesh movment ---*/
+    Kind_Grid_Movement = config_container[ZONE_0]->GetKind_GridMovement(ZONE_0);
+    initStaticMovement = (config_container[ZONE_0]->GetGrid_Movement() && (Kind_Grid_Movement == MOVING_WALL
+                                                                           || Kind_Grid_Movement == ROTATING_FRAME || Kind_Grid_Movement == STEADY_TRANSLATION));
+    
+    
+    if(initStaticMovement){
+        if (rank == MASTER_NODE)cout << endl <<"--------------------- Initialize Static Mesh Movement --------------------" << endl;
+        
+        InitStaticMeshMovement();
+    }
+    
+    if (config_container[ZONE_0]->GetBoolTurbomachinery()){
+        if (rank == MASTER_NODE)cout << endl <<"---------------------- Turbomachinery Preprocessing ---------------------" << endl;
+        TurbomachineryPreprocessing();
+    }
+    
+    
+    if (rank == MASTER_NODE) cout << endl << "---------------------- Python Interface Preprocessing ---------------------" << endl;
+    PythonInterface_Preprocessing();
+    
+    /*--- Definition of the output class (one for all zones). The output class
+     manages the writing of all restart, volume solution, surface solution,
+     surface comma-separated value, and convergence history files (both in serial
+     and in parallel). ---*/
+    
+    output = new COutput(config_container[ZONE_0]);
+    
+    /*--- Open the convergence history file ---*/
+    ConvHist_file = NULL;
+    ConvHist_file = new ofstream*[nZone];
+    for (iZone = 0; iZone < nZone; iZone++) {
+        ConvHist_file[iZone] = NULL;
+        if (rank == MASTER_NODE){
+            ConvHist_file[iZone] = new ofstream[nInst[iZone]];
+            for (iInst = 0; iInst < nInst[iZone]; iInst++) {
+                output->SetConvHistory_Header(&ConvHist_file[iZone][iInst], config_container[iZone], iZone, iInst);
+                config_container[iZone]->SetHistFile(&ConvHist_file[iZone][INST_0]);
+            }
+        }
+    }
+    /*--- Check for an unsteady restart. Update ExtIter if necessary. ---*/
+    if (config_container[ZONE_0]->GetWrt_Unsteady() && config_container[ZONE_0]->GetRestart())
+        ExtIter = config_container[ZONE_0]->GetUnst_RestartIter();
+    
+    /*--- Check for a dynamic restart (structural analysis). Update ExtIter if necessary. ---*/
+    if (config_container[ZONE_0]->GetKind_Solver() == FEM_ELASTICITY
+        && config_container[ZONE_0]->GetWrt_Dynamic() && config_container[ZONE_0]->GetRestart())
+        ExtIter = config_container[ZONE_0]->GetDyn_RestartIter();
+    
+    /*--- Open the FSI convergence history file ---*/
+    
+    if (fsi){
+        if (rank == MASTER_NODE) cout << endl <<"Opening FSI history file." << endl;
+        unsigned short ZONE_FLOW = 0, ZONE_STRUCT = 1;
+        output->SpecialOutput_FSI(&FSIHist_file, geometry_container, solver_container,
+                                  config_container, integration_container, 0,
+                                  ZONE_FLOW, ZONE_STRUCT, true);
+    }
+    
+    /*--- Preprocessing time is reported now, but not included in the next compute portion. ---*/
+    
+#ifndef HAVE_MPI
+    StopTime = su2double(clock())/su2double(CLOCKS_PER_SEC);
+#else
+    StopTime = MPI_Wtime();
+#endif
+    
+    /*--- Compute/print the total time for performance benchmarking. ---*/
+    
+    UsedTime = StopTime-StartTime;
+    UsedTimePreproc    = UsedTime;
+    UsedTimeCompute    = 0.0;
+    UsedTimeOutput     = 0.0;
+    IterCount          = 0;
+    OutputCount        = 0;
+    MDOFs              = 0.0;
+    MDOFsDomain        = 0.0;
+    for (iZone = 0; iZone < nZone; iZone++) {
+        MDOFs       += (su2double)DOFsPerPoint*(su2double)geometry_container[iZone][INST_0][MESH_0]->GetGlobal_nPoint()/(1.0e6);
+        MDOFsDomain += (su2double)DOFsPerPoint*(su2double)geometry_container[iZone][INST_0][MESH_0]->GetGlobal_nPointDomain()/(1.0e6);
+    }
+    
+    /*--- Reset timer for compute/output performance benchmarking. ---*/
+#ifndef HAVE_MPI
+    StartTime = su2double(clock())/su2double(CLOCKS_PER_SEC);
+#else
+    StartTime = MPI_Wtime();
+#endif
+    
+}
+
 void CDriver::Postprocessing() {
 
   bool isBinary = config_container[ZONE_0]->GetWrt_Binary_Restart();
@@ -3743,6 +4213,18 @@ CGeneralDriver::CGeneralDriver(char* confFile, unsigned short val_nZone,
                                                                    val_periodic,
                                                                    MPICommunicator) { }
 
+CGeneralDriver::CGeneralDriver(CConfig** config_aux,
+                               CGeometry**** geometry_aux,
+                               unsigned short val_nZone,
+                               unsigned short val_nDim,
+                               bool val_periodic,
+                               SU2_Comm MPICommunicator) : CDriver(config_aux,
+                                                                    geometry_aux,
+                                                                    val_nZone,
+                                                                    val_nDim,
+                                                                    val_periodic,
+                                                                    MPICommunicator) { }
+
 CGeneralDriver::~CGeneralDriver(void) { }
 
 void CGeneralDriver::Run() {
@@ -3795,6 +4277,18 @@ void CGeneralDriver::DynamicMeshUpdate(unsigned long ExtIter) {
 }
 
 CFluidDriver::CFluidDriver(char* confFile, unsigned short val_nZone, unsigned short val_nDim, bool val_periodic, SU2_Comm MPICommunicator) : CDriver(confFile, val_nZone, val_nDim, val_periodic, MPICommunicator) { }
+
+CFluidDriver::CFluidDriver(CConfig** config_aux,
+                           CGeometry**** geometry_aux,
+                           unsigned short val_nZone,
+                           unsigned short val_nDim,
+                           bool val_periodic,
+                           SU2_Comm MPICommunicator) : CDriver(config_aux,
+                                                                geometry_aux,
+                                                                val_nZone,
+                                                                val_nDim,
+                                                                val_periodic,
+                                                                MPICommunicator) { }
 
 CFluidDriver::~CFluidDriver(void) { }
 
@@ -3954,6 +4448,19 @@ CTurbomachineryDriver::CTurbomachineryDriver(char* confFile,
         val_nDim,
         val_periodic,
         MPICommunicator) { }
+
+CTurbomachineryDriver::CTurbomachineryDriver(CConfig** config_aux,
+                        CGeometry**** geometry_aux,
+                        unsigned short val_nZone,
+                        unsigned short val_nDim,
+                        bool val_periodic,
+                        SU2_Comm MPICommunicator) : CFluidDriver(config_aux,
+                                                                  geometry_aux,
+                                                                  val_nZone,
+                                                                  val_nDim,
+                                                                  val_periodic,
+                                                                  MPICommunicator) { }
+
 
 CTurbomachineryDriver::~CTurbomachineryDriver(void) { }
 
@@ -4194,6 +4701,34 @@ CDiscAdjFluidDriver::CDiscAdjFluidDriver(char* confFile,
     }
   }
 
+}
+
+CDiscAdjFluidDriver::CDiscAdjFluidDriver(CConfig** config_aux,
+                                         CGeometry**** geometry_aux,
+                                         unsigned short val_nZone,
+                                         unsigned short val_nDim,
+                                         bool val_periodic,
+                                         SU2_Comm MPICommunicator) : CFluidDriver(config_aux,
+                                                                                    geometry_aux,
+                                                                                    val_nZone,
+                                                                                    val_nDim,
+                                                                                    val_periodic,
+                                                                                    MPICommunicator) {
+    
+    RecordingState = NONE;
+    unsigned short iZone;
+    
+    direct_iteration = new CIteration*[nZone];
+    
+    for (iZone = 0; iZone < nZone; iZone++){
+        if(config_container[iZone]->GetBoolTurbomachinery()){
+            direct_iteration[iZone] = new CTurboIteration(config_container[iZone]);
+        }
+        else{
+            direct_iteration[iZone] = new CFluidIteration(config_container[iZone]);
+        }
+    }
+    
 }
 
 CDiscAdjFluidDriver::~CDiscAdjFluidDriver(){
@@ -4532,6 +5067,19 @@ CDiscAdjTurbomachineryDriver::CDiscAdjTurbomachineryDriver(char* confFile,
                                                            unsigned short val_nDim,
                                                            bool val_periodic,
                                                            SU2_Comm MPICommunicator): CDiscAdjFluidDriver(confFile, val_nZone, val_nDim, val_periodic, MPICommunicator){ }
+
+CDiscAdjTurbomachineryDriver::CDiscAdjTurbomachineryDriver(CConfig** config_aux,
+                                                           CGeometry**** geometry_aux,
+                                                           unsigned short val_nZone,
+                                                           unsigned short val_nDim,
+                                                           bool val_periodic,
+                                                           SU2_Comm MPICommunicator): CDiscAdjFluidDriver(config_aux,
+                                                                                                          geometry_aux,
+                                                                                                          val_nZone,
+                                                                                                          val_nDim,
+                                                                                                          val_periodic,
+                                                                                                          MPICommunicator) { }
+
 CDiscAdjTurbomachineryDriver::~CDiscAdjTurbomachineryDriver(){
 
 }
@@ -4652,6 +5200,18 @@ CHBDriver::CHBDriver(char* confFile,
   D = new su2double*[nInstHB]; for (kInst = 0; kInst < nInstHB; kInst++) D[kInst] = new su2double[nInstHB];
 
 }
+
+CHBDriver::CHBDriver(CConfig** config_aux,
+          CGeometry**** geometry_aux,
+          unsigned short val_nZone,
+          unsigned short val_nDim,
+          bool val_periodic,
+          SU2_Comm MPICommunicator) : CDriver(config_aux,
+                                              geometry_aux,
+                                              val_nZone,
+                                              val_nDim,
+                                              val_periodic,
+                                              MPICommunicator) { }
 
 CHBDriver::~CHBDriver(void) {
 
@@ -5248,6 +5808,18 @@ CFSIDriver::CFSIDriver(char* confFile,
   }
 
 }
+
+CFSIDriver::CFSIDriver(CConfig** config_aux,
+        CGeometry**** geometry_aux,
+        unsigned short val_nZone,
+        unsigned short val_nDim,
+        bool val_periodic,
+        SU2_Comm MPICommunicator) : CDriver(config_aux,
+                                             geometry_aux,
+                                             val_nZone,
+                                             val_nDim,
+                                             val_periodic,
+                                             MPICommunicator) { }
 
 CFSIDriver::~CFSIDriver(void) {
 
@@ -5946,6 +6518,18 @@ CDiscAdjFSIDriver::CDiscAdjFSIDriver(char* confFile,
   config_container[ZONE_1]->SetnExtIter(1);
 
 }
+
+CDiscAdjFSIDriver::CDiscAdjFSIDriver(CConfig** config_aux,
+                                     CGeometry**** geometry_aux,
+                                     unsigned short val_nZone,
+                                     unsigned short val_nDim,
+                                     bool val_periodic,
+                                     SU2_Comm MPICommunicator) : CFSIDriver(config_aux,
+                                                                         geometry_aux,
+                                                                         val_nZone,
+                                                                         val_nDim,
+                                                                         val_periodic,
+                                                                         MPICommunicator) { }
 
 CDiscAdjFSIDriver::~CDiscAdjFSIDriver(void) {
 
@@ -7437,6 +8021,18 @@ CMultiphysicsZonalDriver::CMultiphysicsZonalDriver(char* confFile,
                                                    unsigned short val_nDim,
                                                    bool val_periodic,
                                                    SU2_Comm MPICommunicator) : CDriver(confFile,
+                                                                                       val_nZone,
+                                                                                       val_nDim,
+                                                                                       val_periodic,
+                                                                                       MPICommunicator) { }
+
+CMultiphysicsZonalDriver::CMultiphysicsZonalDriver(CConfig** config_aux,
+                                                    CGeometry**** geometry_aux,
+                                                    unsigned short val_nZone,
+                                                    unsigned short val_nDim,
+                                                    bool val_periodic,
+                                                    SU2_Comm MPICommunicator) : CDriver(config_aux,
+                                                                                       geometry_aux,
                                                                                        val_nZone,
                                                                                        val_nDim,
                                                                                        val_periodic,

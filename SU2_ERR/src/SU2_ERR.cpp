@@ -1,6 +1,6 @@
 /*!
  * \file SU2_ERR.cpp
- * \brief Main file for the error estimation code (SU2_ERR).
+ * \brief Main file for the error computation code (SU2_ERR).
  * \author B. Munguía
  * \version 6.1.0 "Falcon"
  *
@@ -41,117 +41,136 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     
-    unsigned short nZone, nDim;
+    unsigned short nDim, iZone, nZone = SINGLE_ZONE, iInst;
+    unsigned long nPoint_coarse;
+    su2double StartTime = 0.0, StopTime = 0.0, UsedTime = 0.0;
+    ofstream ConvHist_file;
     char config_file_name[MAX_STRING_SIZE];
-    bool fsi, turbo, zone_specific, periodic = false;
+    int rank = MASTER_NODE;
+    int size = SINGLE_NODE;
+    bool periodic = false;
     
-    /*--- MPI initialization, and buffer setting ---*/
+    /*--- MPI initialization ---*/
     
 #ifdef HAVE_MPI
-    int  buffsize;
-    char *buffptr;
-    SU2_MPI::Init(&argc, &argv);
-    SU2_MPI::Buffer_attach( malloc(BUFSIZE), BUFSIZE );
-    SU2_Comm MPICommunicator(MPI_COMM_WORLD);
+    SU2_MPI::Init(&argc,&argv);
+    SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
 #else
     SU2_Comm MPICommunicator(0);
 #endif
     
-    /*--- Create a pointer to the main SU2 Driver ---*/
+    rank = SU2_MPI::GetRank();
+    size = SU2_MPI::GetSize();
     
-    CDriver *driver = NULL;
+    /*--- Pointer to different structures that will be used throughout the entire code ---*/
     
-    /*--- Load in the number of zones and spatial dimensions in the mesh file (If no config
+    CGeometry ****geometry_container        = NULL;
+    CConfig **config_container              = NULL;
+    CDriver *driver                         = NULL;
+    unsigned short *nInst                  = NULL;
+    
+    /*--- Load in the number of zones and spatial dimensions in the mesh file (if no config
      file is specified, default.cfg is used) ---*/
     
-    if (argc == 2) { strcpy(config_file_name, argv[1]); }
+    if (argc == 2 || argc == 3) { strcpy(config_file_name,argv[1]); }
     else { strcpy(config_file_name, "default.cfg"); }
-    
-    /*--- Read the name and format of the input mesh file to get from the mesh
-     file the number of zones and dimensions from the numerical grid (required
-     for variables allocation)  ---*/
     
     CConfig *config = NULL;
     config = new CConfig(config_file_name, SU2_ERR);
     
-    nZone    = CConfig::GetnZone(config->GetMesh_FileName(), config->GetMesh_FileFormat(), config);
-    nDim     = CConfig::GetnDim(config->GetMesh_FileName(), config->GetMesh_FileFormat());
-    fsi      = config->GetFSI_Simulation();
-    turbo    = config->GetBoolTurbomachinery();
-    periodic = CConfig::GetPeriodic(config->GetMesh_FileName(), config->GetMesh_FileFormat(), config);
-    zone_specific = config->GetBoolZoneSpecific();
+    nZone         = CConfig::GetnZone(config->GetMesh_FileName(), config->GetMesh_FileFormat(), config);
+    nDim          = CConfig::GetnDim(config->GetMesh_FileName(), config->GetMesh_FileFormat());
+    periodic      = CConfig::GetPeriodic(config->GetMesh_FileName(), config->GetMesh_FileFormat(), config);
+    nPoint_coarse = CConfig::GetnPoint(config->GetMesh_FileName(), config->GetMesh_FileFormat());
     
-    /*--- First, given the basic information about the number of zones and the
-     solver types from the config, instantiate the appropriate driver for the problem
-     and perform all the preprocessing. ---*/
+    /*--- Definition of the containers per zones ---*/
     
-    if ( (config->GetKind_Solver() == FEM_ELASTICITY ||
-          config->GetKind_Solver() == DISC_ADJ_FEM ||
-          config->GetKind_Solver() == POISSON_EQUATION ||
-          config->GetKind_Solver() == WAVE_EQUATION ||
-          config->GetKind_Solver() == HEAT_EQUATION) ) {
+    config_container      = new CConfig*[nZone];
+    geometry_container    = new CGeometry***[nZone];
+    nInst = new unsigned short[nZone];
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        config_container[iZone]       = NULL;
+        geometry_container[iZone]     = NULL;
+        nInst[iZone]                  = 1;
+    }
+    
+    /*--- Loop over all zones to initialize the various classes. In most
+     cases, nZone is equal to one. This represents the solution of a partial
+     differential equation on a single block, unstructured mesh. ---*/
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
         
-        /*--- Single zone problem: instantiate the single zone driver class. ---*/
+        /*--- Definition of the configuration option class for all zones. In this
+         constructor, the input configuration file is parsed and all options are
+         read and stored. ---*/
         
-        if (nZone > 1 ) {
-            SU2_MPI::Error("The required solver doesn't support multizone simulations", CURRENT_FUNCTION);
-        }
+        config_container[iZone] = new CConfig(config_file_name, SU2_ERR, iZone, nZone, 0, VERB_HIGH);
+        config_container[iZone]->SetMPICommunicator(MPICommunicator);
         
-        driver = new CGeneralDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
+        /*--- Read the number of instances for each zone ---*/
         
-    } else if (config->GetUnsteady_Simulation() == HARMONIC_BALANCE) {
+        nInst[iZone] = config_container[iZone]->GetnTimeInstances();
         
-        /*--- Harmonic balance problem: instantiate the Harmonic Balance driver class. ---*/
+        geometry_container[iZone] = new CGeometry**[nInst[iZone]];
         
-        driver = new CHBDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-        
-    } else if ((nZone == 2) && fsi) {
-        
-        bool stat_fsi = ((config->GetDynamic_Analysis() == STATIC) && (config->GetUnsteady_Simulation() == STEADY));
-        bool disc_adj_fsi = (config->GetDiscrete_Adjoint());
-        
-        /*--- If the problem is a discrete adjoint FSI problem ---*/
-        if (disc_adj_fsi) {
-            if (stat_fsi) {
-                driver = new CDiscAdjFSIDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-            }
-            else {
-                SU2_MPI::Error("WARNING: There is no discrete adjoint implementation for dynamic FSI. ", CURRENT_FUNCTION);
-            }
-        }
-        /*--- If the problem is a direct FSI problem ---*/
-        else{
-            driver = new CFSIDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-        }
-        
-    } else if (zone_specific) {
-        driver = new CMultiphysicsZonalDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-    } else {
-        
-        /*--- Multi-zone problem: instantiate the multi-zone driver class by default
-         or a specialized driver class for a particular multi-physics problem. ---*/
-        
-        if (config->GetDiscrete_Adjoint()) {
+        for (iInst = 0; iInst < nInst[iZone]; iInst++){
             
-            if (turbo) {
-                
-                driver = new CDiscAdjTurbomachineryDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-                
+            /*--- Set some values for config. Note that for error estimation, we'll turn off MG. ---*/
+            
+            config_container[iZone]->SetiInst(iInst);
+            config_container[iZone]->SetMGLevels(0);
+            
+            /*--- Definition of the geometry class to store the primal grid in the partitioning process. ---*/
+            
+            CGeometry *geometry_aux = NULL;
+            
+            /*--- All ranks process the grid and call ParMETIS for partitioning ---*/
+            
+            geometry_aux = new CPhysicalGeometry(config_container[iZone], iZone, nZone);
+            
+            /*--- Color the initial grid and set the send-receive domains (ParMETIS) ---*/
+            
+            geometry_aux->SetColorGrid_Parallel(config_container[iZone]);
+            
+            /*--- Allocate the memory of the current domain, and
+             divide the grid between the nodes ---*/
+            
+            geometry_container[iZone][iInst] = NULL;
+            
+            geometry_container[iZone][iInst] = new CGeometry *[config_container[iZone]->GetnMGLevels()+1];
+            
+            /*--- Until we finish the new periodic BC implementation, use the old
+             partitioning routines for cases with periodic BCs. The old routines
+             will be entirely removed eventually in favor of the new methods. ---*/
+            
+            if (periodic) {
+                geometry_container[iZone][iInst][MESH_0] = new CPhysicalGeometry(geometry_aux, config_container[iZone]);
             } else {
-                
-                driver = new CDiscAdjFluidDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
-                
+                geometry_container[iZone][iInst][MESH_0] = new CPhysicalGeometry(geometry_aux, config_container[iZone], periodic);
             }
             
-        } else if (turbo) {
+            /*--- Deallocate the memory of geometry_aux ---*/
             
-            driver = new CTurbomachineryDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
+            delete geometry_aux;
             
-        } else {
+            /*--- Add the Send/Receive boundaries ---*/
             
-            /*--- Instantiate the class for external aerodynamics ---*/
+            geometry_container[iZone][iInst][MESH_0]->SetSendReceive(config_container[iZone]);
             
-            driver = new CFluidDriver(config_file_name, nZone, nDim, periodic, MPICommunicator);
+            /*--- Add the Send/Receive boundaries ---*/
+            
+            geometry_container[iZone][iInst][MESH_0]->SetBoundaries(config_container[iZone]);
+            
+            /*--- Create the vertex structure (required for MPI) ---*/
+            
+            if (rank == MASTER_NODE) cout << "Identify vertices." <<endl;
+            geometry_container[iZone][iInst][MESH_0]->SetVertex(config_container[iZone]);
+            
+            /*--- Store the global to local mapping after preprocessing. ---*/
+            
+            if (rank == MASTER_NODE) cout << "Storing a mapping from global to local point index." << endl;
+            geometry_container[iZone][iInst][MESH_0]->SetGlobal_to_Local_Point();
             
         }
         
@@ -160,25 +179,77 @@ int main(int argc, char *argv[]) {
     delete config;
     config = NULL;
     
-    /*--- Launch the main external loop of the solver ---*/
+    unsigned long nPoint_fine = geometry_container[ZONE_0][INST_0][MESH_0]->GetGlobal_nPointDomain();
+    if(rank == MASTER_NODE) cout << "Points in coarse mesh = " << nPoint_coarse << "\nPoints in fine mesh   = " << nPoint_fine << endl;
     
-    driver->StartSolver();
+    /*--- Set up a timer for performance benchmarking (preprocessing time is included) ---*/
     
-    /*--- Postprocess all the containers, close history file, exit SU2 ---*/
+#ifdef HAVE_MPI
+    StartTime = MPI_Wtime();
+#else
+    StartTime = su2double(clock())/su2double(CLOCKS_PER_SEC);
+#endif
     
-    driver->Postprocessing();
+    /*--- Define a discrete adjoint driver with the refined geometry and updated config options. ---*/
     
-    if (driver != NULL) delete driver;
-    driver = NULL;
+    driver = new CDiscAdjFluidDriver(config_container, geometry_container, nZone, nDim, periodic, MPICommunicator);
+    
+    delete driver;
+    
+    if (rank == MASTER_NODE)
+        cout << endl <<"------------------------- Solver Postprocessing -------------------------" << endl;
+    
+    if (geometry_container != NULL) {
+        for (iZone = 0; iZone < nZone; iZone++) {
+            for (iInst = 0; iInst < nInst[iZone]; iInst++){
+                if (geometry_container[iZone][iInst] != NULL) {
+                    delete geometry_container[iZone][iInst];
+                }
+            }
+            if (geometry_container[iZone] != NULL)
+                delete geometry_container[iZone];
+        }
+        delete [] geometry_container;
+    }
+    if (rank == MASTER_NODE) cout << "Deleted CGeometry container." << endl;
+    
+    if (config_container != NULL) {
+        for (iZone = 0; iZone < nZone; iZone++) {
+            if (config_container[iZone] != NULL) {
+                delete config_container[iZone];
+            }
+        }
+        delete [] config_container;
+    }
+    if (rank == MASTER_NODE) cout << "Deleted CConfig container." << endl;
+    
+    /*--- Synchronization point after a single solver iteration. Compute the
+     wall clock time required. ---*/
+    
+#ifdef HAVE_MPI
+    StopTime = MPI_Wtime();
+#else
+    StopTime = su2double(clock())/su2double(CLOCKS_PER_SEC);
+#endif
+    
+    /*--- Compute/print the total time for performance benchmarking. ---*/
+    
+    UsedTime = StopTime-StartTime;
+    if (rank == MASTER_NODE) {
+        cout << "\nCompleted in " << fixed << UsedTime << " seconds on "<< size;
+        if (size == 1) cout << " core." << endl; else cout << " cores." << endl;
+    }
+    
+    /*--- Exit the solver cleanly ---*/
+    
+    if (rank == MASTER_NODE)
+        cout << endl <<"------------------------- Exit Success (SU2_ERR) ------------------------" << endl << endl;
     
     /*--- Finalize MPI parallelization ---*/
     
 #ifdef HAVE_MPI
-    SU2_MPI::Buffer_detach(&buffptr, &buffsize);
-    free(buffptr);
     SU2_MPI::Finalize();
 #endif
     
     return EXIT_SUCCESS;
-    
 }
