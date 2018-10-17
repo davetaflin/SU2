@@ -133,6 +133,31 @@ public:
                        CFreeFormDefBox*** FFDBox,
                        unsigned short val_iZone,
                        unsigned short val_iInst);
+    
+  /*!
+   * \brief A virtual member.
+   * \param[in] output - Pointer to the COutput class.
+   * \param[in] integration_container - Container vector with all the integration methods.
+   * \param[in] geometry_container - Geometrical definition of the problem.
+   * \param[in] solver_container - Container vector with all the solutions.
+   * \param[in] numerics_container - Description of the numerical method (the way in which the equations are solved).
+   * \param[in] config_container - Definition of the particular problem.
+   * \param[in] surface_movement - Surface movement classes of the problem.
+   * \param[in] grid_movement - Volume grid movement classes of the problem.
+   * \param[in] FFDBox - FFD FFDBoxes of the problem.
+   */
+  virtual void Iterate(COutput *output,
+                       CIntegration ****integration_container,
+                       CGeometry ****geometry_container,
+                       CSolver *****solver_container,
+                       CNumerics ******numerics_container,
+                       CConfig **config_container,
+                       CSurfaceMovement **surface_movement,
+                       CVolumetricMovement ***grid_movement,
+                       CFreeFormDefBox*** FFDBox,
+                       unsigned short val_iZone,
+                       unsigned short val_iInst,
+                       unsigned long nPoint_coarse);
   
   /*!
    * \brief A virtual member.
@@ -211,6 +236,14 @@ public:
                              CConfig** config_container,
                              unsigned short iZone,
                              unsigned short iInst,
+                             unsigned short kind_recording){}
+    
+  virtual void RegisterInput(CSolver *****solver_container,
+                             CGeometry ****geometry_container,
+                             CConfig** config_container,
+                             unsigned short iZone,
+                             unsigned short iInst,
+                             unsigned long nPoint_coarse,
                              unsigned short kind_recording){}
 
   virtual void SetDependencies(CSolver *****solver_container,
@@ -1047,6 +1080,31 @@ public:
                CFreeFormDefBox*** FFDBox,
                unsigned short val_iZone,
                unsigned short val_iInst);
+    
+  /*!
+   * \brief Perform a single iteration of the adjoint fluid system.
+   * \param[in] output - Pointer to the COutput class.
+   * \param[in] integration_container - Container vector with all the integration methods.
+   * \param[in] geometry_container - Geometrical definition of the problem.
+   * \param[in] solver_container - Container vector with all the solutions.
+   * \param[in] numerics_container - Description of the numerical method (the way in which the equations are solved).
+   * \param[in] config_container - Definition of the particular problem.
+   * \param[in] surface_movement - Surface movement classes of the problem.
+   * \param[in] grid_movement - Volume grid movement classes of the problem.
+   * \param[in] FFDBox - FFD FFDBoxes of the problem.
+   */
+  void Iterate(COutput *output,
+               CIntegration ****integration_container,
+               CGeometry ****geometry_container,
+               CSolver *****solver_container,
+               CNumerics ******numerics_container,
+               CConfig **config_container,
+               CSurfaceMovement **surface_movement,
+               CVolumetricMovement ***grid_movement,
+               CFreeFormDefBox*** FFDBox,
+               unsigned short val_iZone,
+               unsigned short val_iInst,
+               unsigned long nPoint_coarse);
   
   /*!
    * \brief Updates the containers for the discrete adjoint fluid system.
@@ -1120,6 +1178,22 @@ public:
                      CConfig** config_container,
                      unsigned short iZone,
                      unsigned short iInst,
+                     unsigned short kind_recording);
+    
+  /*!
+   * \brief Registers all input variables of the fluid iteration from the coarse mesh.
+   * \param[in] solver_container - Container vector with all the solutions.
+   * \param[in] geometry_container - Geometrical definition of the problem.
+   * \param[in] config_container - Definition of the particular problem.
+   * \param[in] iZone - Index of the zone.
+   * \param[in] kind_recording - Kind of recording, either FLOW_CONS_VARS or MESH_COORDS
+   */
+  void RegisterInput(CSolver *****solver_container,
+                     CGeometry ****geometry_container,
+                     CConfig** config_container,
+                     unsigned short iZone,
+                     unsigned short iInst,
+                     unsigned long nPoint_coarse,
                      unsigned short kind_recording);
 
   /*!

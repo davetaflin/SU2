@@ -5062,6 +5062,117 @@ void CDiscAdjFluidDriver::DirectRun(){
 
 }
 
+void CDiscAdjFluidDriver::ComputeErrorEstimate(unsigned long nPoint_coarse, unsigned long nPoint_fine){
+    
+    /*--- Perform interpolation from coarse to fine mesh. ---*/
+    
+    /*--- Run a single iteration of the flow and discrete adjoint solver. ---*/
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        
+        iteration_container[iZone][INST_0]->Preprocess(output, integration_container, geometry_container,
+                                                       solver_container, numerics_container, config_container,
+                                                       surface_movement, grid_movement, FFDBox, iZone, INST_0);
+    }
+        
+    /*--- Store the computational graph of one direct iteration with the conservative variables as input. ---*/
+        
+    unsigned short iZone, iMesh;
+    
+    AD::Reset();
+    
+    /*--- Prepare for recording by resetting the flow solution to the initial converged solution---*/
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        for (iMesh = 0; iMesh <= config_container[iZone]->GetnMGLevels(); iMesh++){
+            solver_container[iZone][INST_0][iMesh][ADJFLOW_SOL]->SetRecording(geometry_container[iZone][INST_0][iMesh], config_container[iZone]);
+        }
+        if (config_container[iZone]->GetKind_Solver() == DISC_ADJ_RANS && !config_container[iZone]->GetFrozen_Visc_Disc()) {
+            solver_container[iZone][INST_0][MESH_0][ADJTURB_SOL]->SetRecording(geometry_container[iZone][INST_0][MESH_0], config_container[iZone]);
+        }
+    }
+    
+    
+    /*---Enable recording and register input of the flow iteration (conservative variables or node coordinates) --- */
+    
+    AD::StartRecording();
+        
+    if (rank == MASTER_NODE) {
+        cout << endl << "-------------------------------------------------------------------------" << endl;
+        cout << "Direct iteration to store computational graph." << endl;
+        cout << "Compute residuals to check the convergence of the direct problem." << endl;
+        cout << "-------------------------------------------------------------------------" << endl << endl;
+    }
+    for (iZone = 0; iZone < nZone; iZone++) {
+        iteration_container[iZone][INST_0]->RegisterInput(solver_container, geometry_container, config_container, iZone, INST_0, nPoint_coarse, FLOW_CONS_VARS);
+    }
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        iteration_container[iZone][INST_0]->SetDependencies(solver_container, geometry_container, config_container, iZone, INST_0, FLOW_CONS_VARS);
+    }
+    
+    /*--- Do one iteration of the direct flow solver ---*/
+    
+    DirectRun();
+    
+    /*--- Print residuals in the first iteration ---*/
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        if (rank == MASTER_NODE) {
+            cout << " Zone " << iZone << ": log10[Conservative 0]: "<< log10(solver_container[iZone][INST_0][MESH_0][FLOW_SOL]->GetRes_RMS(0)) << endl;
+            if ( config_container[iZone]->GetKind_Turb_Model() != NONE && !config_container[iZone]->GetFrozen_Visc_Disc()) {
+                cout <<"       log10[RMS k]: " << log10(solver_container[iZone][INST_0][MESH_0][TURB_SOL]->GetRes_RMS(0)) << endl;
+            }
+        }
+    }
+    
+    RecordingState = FLOW_CONS_VARS;
+    
+    for (iZone = 0; iZone < nZone; iZone++) {
+        iteration_container[iZone][INST_0]->RegisterOutput(solver_container, geometry_container, config_container, output, iZone, INST_0);
+    }
+    
+    /*--- Extract the objective function and store it --- */
+    
+    SetObjFunction();
+    
+    AD::StopRecording();
+    
+    /*--- Initialize the adjoint of the output variables of the iteration with the adjoint solution
+     *    of the previous iteration. The values are passed to the AD tool. ---*/
+        
+    for (iZone = 0; iZone < nZone; iZone++) {
+            
+        config_container[iZone]->SetIntIter(0);
+            
+        iteration_container[iZone][INST_0]->InitializeAdjoint(solver_container, geometry_container, config_container, iZone, INST_0);
+            
+    }
+        
+    /*--- Initialize the adjoint of the objective function with 1.0. ---*/
+        
+    SetAdj_ObjFunction();
+        
+    /*--- Interpret the stored information by calling the corresponding routine of the AD tool. ---*/
+        
+    AD::ComputeAdjoint();
+        
+    /*--- Extract the computed adjoint values of the input variables and store them for the next iteration. ---*/
+        
+    for (iZone = 0; iZone < nZone; iZone++) {
+        iteration_container[iZone][INST_0]->Iterate(output, integration_container, geometry_container,
+                                                    solver_container, numerics_container, config_container,
+                                                    surface_movement, grid_movement, FFDBox, iZone, INST_0, nPoint_coarse);
+        }
+        
+    /*--- Clear the stored adjoint information to be ready for a new evaluation. ---*/
+        
+    AD::ClearAdjoints();
+    
+    /*--- Compute ECC ---*/
+    
+}
+
 CDiscAdjTurbomachineryDriver::CDiscAdjTurbomachineryDriver(char* confFile,
                                                            unsigned short val_nZone,
                                                            unsigned short val_nDim,

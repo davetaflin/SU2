@@ -3589,6 +3589,13 @@ public:
    * \param[in] config_container - The particular config.
    */
   virtual void RegisterSolution(CGeometry *geometry, CConfig *config);
+    
+  /*!
+   * \brief A virtual member.
+   * \param[in] geometry - Geometrical definition of the problem.
+   * \param[in] config_container - The particular config.
+   */
+  virtual void RegisterSolution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse);
   
   /*!
    * \brief A virtual member.
@@ -3618,6 +3625,14 @@ public:
    * \param[in] config - The particular config.
    */
   virtual void ExtractAdjoint_Solution(CGeometry *geometry,  CConfig *config);
+    
+  /*!
+   * \brief A virtual member.
+   * \param[in] geometry - The geometrical definition of the problem.
+   * \param[in] solver_container - The solver container holding all solutions.
+   * \param[in] config - The particular config.
+   */
+  virtual void ExtractAdjoint_Solution(CGeometry *geometry,  CConfig *config, unsigned long nPoint_coarse);
   
   /*!
    * \brief A virtual member.
@@ -12555,6 +12570,14 @@ public:
    * \param[in] config_container - The particular config.
    */
   void RegisterSolution(CGeometry *geometry, CConfig *config);
+    
+  /*!
+   * \brief Performs the preprocessing of the adjoint AD-based solver on a coarse mesh.
+   *        Registers all necessary variables on the tape. Called while tape is active.
+   * \param[in] geometry_container - The geometry container holding all grid levels.
+   * \param[in] config_container - The particular config.
+   */
+  void RegisterSolution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse);
   
   /*!
    * \brief Performs the preprocessing of the adjoint AD-based solver.
@@ -12588,6 +12611,14 @@ public:
    * \param[in] config - The particular config.
    */
   void ExtractAdjoint_Solution(CGeometry *geometry, CConfig *config);
+    
+  /*!
+   * \brief Sets the adjoint values of the input variables of the flow (+turb.) iteration
+   *        after tape has been evaluated.
+   * \param[in] geometry - The geometrical definition of the problem.
+   * \param[in] config - The particular config.
+   */
+  void ExtractAdjoint_Solution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse);
   
   /*!
    * \brief A virtual member.

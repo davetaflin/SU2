@@ -137,6 +137,11 @@ public:
    * \brief A virtual member.
    */  
   virtual void Run() { };
+    
+  /*!
+   * \brief A virtual member.
+   */
+  virtual void ComputeErrorEstimate(unsigned long nPoint_coarse, unsigned long nPoint_fine) { };
 
   /*!
    * \brief Construction of the edge-based data structure and the multigrid structure.
@@ -973,6 +978,11 @@ public:
    * \brief Initialize the adjoint value of the objective function.
    */
   void SetAdj_ObjFunction();
+    
+    /*!
+     * \brief Compute the error in the computable correction.
+     */
+  void ComputeErrorEstimate(unsigned long nPoint_coarse, unsigned long nPoint_fine);
 };
 
 /*!

@@ -194,6 +194,9 @@ int main(int argc, char *argv[]) {
     
     driver = new CDiscAdjFluidDriver(config_container, geometry_container, nZone, nDim, periodic, MPICommunicator);
     
+    /*--- Perform the error estimation. ---*/
+    driver->ComputeErrorEstimate(nPoint_coarse, nPoint_fine);
+    
     delete driver;
     
     if (rank == MASTER_NODE)

@@ -1989,6 +1989,46 @@ void CDiscAdjFluidIteration::Iterate(COutput *output,
   }
 
   }
+
+void CDiscAdjFluidIteration::Iterate(COutput *output,
+                                     CIntegration ****integration_container,
+                                     CGeometry ****geometry_container,
+                                     CSolver *****solver_container,
+                                     CNumerics ******numerics_container,
+                                     CConfig **config_container,
+                                     CSurfaceMovement **surface_movement,
+                                     CVolumetricMovement ***volume_grid_movement,
+                                     CFreeFormDefBox*** FFDBox,
+                                     unsigned short val_iZone,
+                                     unsigned short val_iInst,
+                                     unsigned long nPoint_coarse) {
+    
+    unsigned long ExtIter = config_container[val_iZone]->GetExtIter();
+    unsigned short Kind_Solver = config_container[val_iZone]->GetKind_Solver();
+    unsigned long IntIter = 0;
+    bool unsteady = config_container[val_iZone]->GetUnsteady_Simulation() != STEADY;
+    bool frozen_visc = config_container[val_iZone]->GetFrozen_Visc_Disc();
+    
+    if (!unsteady)
+        IntIter = ExtIter;
+    else {
+        IntIter = config_container[val_iZone]->GetIntIter();
+    }
+    
+    /*--- Extract the adjoints of the conservative input variables and store them for the next iteration ---*/
+    
+    if ((Kind_Solver == DISC_ADJ_NAVIER_STOKES) || (Kind_Solver == DISC_ADJ_RANS) || (Kind_Solver == DISC_ADJ_EULER)) {
+        
+        solver_container[val_iZone][val_iInst][MESH_0][ADJFLOW_SOL]->ExtractAdjoint_Solution(geometry_container[val_iZone][val_iInst][MESH_0], config_container[val_iZone], nPoint_coarse);
+        
+    }
+    if ((Kind_Solver == DISC_ADJ_RANS) && !frozen_visc) {
+        
+        solver_container[val_iZone][val_iInst][MESH_0][ADJTURB_SOL]->ExtractAdjoint_Solution(geometry_container[val_iZone][val_iInst][MESH_0],
+                                                                                             config_container[val_iZone], nPoint_coarse);
+    }
+    
+}
   
     
 void CDiscAdjFluidIteration::InitializeAdjoint(CSolver *****solver_container, CGeometry ****geometry_container, CConfig **config_container, unsigned short iZone, unsigned short iInst){
@@ -2062,6 +2102,25 @@ void CDiscAdjFluidIteration::RegisterInput(CSolver *****solver_container, CGeome
 
   }
 
+}
+
+void CDiscAdjFluidIteration::RegisterInput(CSolver *****solver_container, CGeometry ****geometry_container, CConfig **config_container, unsigned short iZone, unsigned short iInst, unsigned long nPoint_coarse, unsigned short kind_recording){
+    
+    unsigned short Kind_Solver = config_container[iZone]->GetKind_Solver();
+    bool frozen_visc = config_container[iZone]->GetFrozen_Visc_Disc();
+    
+    /*--- Register flow and turbulent variables as input ---*/
+        
+    if ((Kind_Solver == DISC_ADJ_NAVIER_STOKES) || (Kind_Solver == DISC_ADJ_RANS) || (Kind_Solver == DISC_ADJ_EULER)) {
+            
+        solver_container[iZone][iInst][MESH_0][ADJFLOW_SOL]->RegisterSolution(geometry_container[iZone][iInst][MESH_0], config_container[iZone], nPoint_coarse);
+            
+    }
+        
+    if ((Kind_Solver == DISC_ADJ_RANS) && !frozen_visc) {
+        solver_container[iZone][iInst][MESH_0][ADJTURB_SOL]->RegisterSolution(geometry_container[iZone][iInst][MESH_0], config_container[iZone]);
+    }
+    
 }
 
 void CDiscAdjFluidIteration::SetDependencies(CSolver *****solver_container, CGeometry ****geometry_container, CConfig **config_container, unsigned short iZone, unsigned short iInst, unsigned short kind_recording){

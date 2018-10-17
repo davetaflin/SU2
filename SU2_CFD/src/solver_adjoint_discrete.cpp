@@ -357,6 +357,31 @@ void CDiscAdjSolver::RegisterSolution(CGeometry *geometry, CConfig *config) {
   }
 }
 
+void CDiscAdjSolver::RegisterSolution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse) {
+    unsigned long iPoint;
+    
+    bool time_n_needed  = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
+                           (config->GetUnsteady_Simulation() == DT_STEPPING_2ND)),
+    time_n1_needed = config->GetUnsteady_Simulation() == DT_STEPPING_2ND,
+    input = true;
+    
+    /*--- Register solution at all necessary time instances and other variables on the tape ---*/
+    
+    for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+        direct_solver->node[iPoint]->RegisterSolution(input);
+    }
+    if (time_n_needed) {
+        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+            direct_solver->node[iPoint]->RegisterSolution_time_n();
+        }
+    }
+    if (time_n1_needed) {
+        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+            direct_solver->node[iPoint]->RegisterSolution_time_n1();
+        }
+    }
+}
+
 void CDiscAdjSolver::RegisterVariables(CGeometry *geometry, CConfig *config, bool reset) {
 
   /*--- Register farfield values as input ---*/
@@ -612,6 +637,64 @@ void CDiscAdjSolver::ExtractAdjoint_Solution(CGeometry *geometry, CConfig *confi
   }
 
   SetResidual_RMS(geometry, config);
+}
+
+void CDiscAdjSolver::ExtractAdjoint_Solution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse){
+    
+    bool time_n_needed  = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
+                           (config->GetUnsteady_Simulation() == DT_STEPPING_2ND));
+    
+    bool time_n1_needed = config->GetUnsteady_Simulation() == DT_STEPPING_2ND;
+    
+    unsigned short iVar;
+    unsigned long iPoint;
+    
+    /*--- Set Residuals to zero ---*/
+    
+    for (iVar = 0; iVar < nVar; iVar++) {
+        SetRes_RMS(iVar,0.0);
+        SetRes_Max(iVar,0.0,0);
+    }
+    
+    for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+        
+        /*--- Set the old solution ---*/
+        
+        node[iPoint]->Set_OldSolution();
+        
+        /*--- Extract the adjoint solution ---*/
+        
+        direct_solver->node[iPoint]->GetAdjointSolution(Solution);
+        
+        /*--- Store the adjoint solution ---*/
+        
+        node[iPoint]->SetSolution(Solution);
+    }
+    
+    if (time_n_needed) {
+        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+            
+            /*--- Extract the adjoint solution at time n ---*/
+            
+            direct_solver->node[iPoint]->GetAdjointSolution_time_n(Solution);
+            
+            /*--- Store the adjoint solution at time n ---*/
+            
+            node[iPoint]->Set_Solution_time_n(Solution);
+        }
+    }
+    if (time_n1_needed) {
+        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
+            
+            /*--- Extract the adjoint solution at time n-1 ---*/
+            
+            direct_solver->node[iPoint]->GetAdjointSolution_time_n1(Solution);
+            
+            /*--- Store the adjoint solution at time n-1 ---*/
+            
+            node[iPoint]->Set_Solution_time_n1(Solution);
+        }
+    }
 }
 
 void CDiscAdjSolver::ExtractAdjoint_Variables(CGeometry *geometry, CConfig *config) {
