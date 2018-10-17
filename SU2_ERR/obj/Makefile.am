@@ -1,8 +1,8 @@
 ################################################################################
 #
 # \file Makefile.am
-# \brief Makefile for SU2_CFD
-# \author M. Colonno, T. Economon, F. Palacios
+# \brief Makefile for SU2_ERR
+# \author B. Munguía
 # \version 6.1.0 "Falcon"
 #
 # The current SU2 release has been coordinated by the
@@ -40,19 +40,9 @@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
-bin_PROGRAMS =
-
-if BUILD_NORMAL
-bin_PROGRAMS += ../bin/SU2_ERR
-endif
-
-if BUILD_DIRECTDIFF
-bin_PROGRAMS += ../bin/SU2_ERR_DIRECTDIFF
-endif
-
 if BUILD_REVERSE
-bin_PROGRAMS += ../bin/SU2_ERR_AD
-endif
+
+bin_PROGRAMS = ../bin/SU2_ERR
 
 noinst_LIBRARIES= 
 
@@ -182,14 +172,7 @@ su2_err_cxx_flags += @ZLIB_CXX@
 su2_err_ldadd += @ZLIB_LD@
 # endif
 
-if BUILD_NORMAL
-___bin_SU2_ERR_SOURCES = ${su2_err_sources}
-___bin_SU2_ERR_CXXFLAGS = ${su2_err_cxx_flags}
-___bin_SU2_ERR_LDADD =  ../../SU2_CFD/obj/libSU2Core.a ../../Common/lib/libSU2.a ${su2_err_ldadd}
-endif
-
-if BUILD_REVERSE
-___bin_SU2_ERR_AD_SOURCES = $(su2_err_sources) ${libSU2Core_sources}
-___bin_SU2_ERR_AD_CXXFLAGS = @REVERSE_CXX@ ${su2_err_cxx_flags}
-___bin_SU2_ERR_AD_LDADD = @REVERSE_LIBS@ ../../Common/lib/libSU2_AD.a ${su2_err_ldadd}
+___bin_SU2_ERR_SOURCES = $(su2_err_sources) ${libSU2Core_sources}
+___bin_SU2_ERR_CXXFLAGS = @REVERSE_CXX@ ${su2_err_cxx_flags}
+___bin_SU2_ERR_LDADD = @REVERSE_LIBS@ ../../Common/lib/libSU2_AD.a ${su2_err_ldadd}
 endif

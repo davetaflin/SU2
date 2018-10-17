@@ -50,15 +50,17 @@ int main(int argc, char *argv[]) {
     int size = SINGLE_NODE;
     bool periodic = false;
     
-    /*--- MPI initialization ---*/
+    /*--- MPI initialization, and buffer setting ---*/
     
 #ifdef HAVE_MPI
-    SU2_MPI::Init(&argc,&argv);
-    SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
+    int  buffsize;
+    char *buffptr;
+    SU2_MPI::Init(&argc, &argv);
+    SU2_MPI::Buffer_attach( malloc(BUFSIZE), BUFSIZE );
+    SU2_Comm MPICommunicator(MPI_COMM_WORLD);
 #else
     SU2_Comm MPICommunicator(0);
 #endif
-    
     rank = SU2_MPI::GetRank();
     size = SU2_MPI::GetSize();
     
