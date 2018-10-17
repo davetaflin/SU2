@@ -358,7 +358,7 @@ void CDiscAdjSolver::RegisterSolution(CGeometry *geometry, CConfig *config) {
 }
 
 void CDiscAdjSolver::RegisterSolution(CGeometry *geometry, CConfig *config, unsigned long nPoint_coarse) {
-    unsigned long iPoint;
+    unsigned long iPoint, nPoint = geometry->GetnPoint();
     
     bool time_n_needed  = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
                            (config->GetUnsteady_Simulation() == DT_STEPPING_2ND)),
@@ -367,17 +367,17 @@ void CDiscAdjSolver::RegisterSolution(CGeometry *geometry, CConfig *config, unsi
     
     /*--- Register solution at all necessary time instances and other variables on the tape ---*/
     
-    for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-        direct_solver->node[iPoint]->RegisterSolution(input);
+    for (iPoint = 0; iPoint < nPoint; iPoint++) {
+        if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) direct_solver->node[iPoint]->RegisterSolution(input);
     }
     if (time_n_needed) {
-        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-            direct_solver->node[iPoint]->RegisterSolution_time_n();
+        for (iPoint = 0; iPoint < nPoint; iPoint++) {
+            if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) direct_solver->node[iPoint]->RegisterSolution_time_n();
         }
     }
     if (time_n1_needed) {
-        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-            direct_solver->node[iPoint]->RegisterSolution_time_n1();
+        for (iPoint = 0; iPoint < nPoint; iPoint++) {
+            if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) direct_solver->node[iPoint]->RegisterSolution_time_n1();
         }
     }
 }
@@ -647,7 +647,7 @@ void CDiscAdjSolver::ExtractAdjoint_Solution(CGeometry *geometry, CConfig *confi
     bool time_n1_needed = config->GetUnsteady_Simulation() == DT_STEPPING_2ND;
     
     unsigned short iVar;
-    unsigned long iPoint;
+    unsigned long iPoint, nPoint = geometry->GetnPoint();
     
     /*--- Set Residuals to zero ---*/
     
@@ -656,43 +656,52 @@ void CDiscAdjSolver::ExtractAdjoint_Solution(CGeometry *geometry, CConfig *confi
         SetRes_Max(iVar,0.0,0);
     }
     
-    for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-        
-        /*--- Set the old solution ---*/
-        
-        node[iPoint]->Set_OldSolution();
-        
-        /*--- Extract the adjoint solution ---*/
-        
-        direct_solver->node[iPoint]->GetAdjointSolution(Solution);
-        
-        /*--- Store the adjoint solution ---*/
-        
-        node[iPoint]->SetSolution(Solution);
+    for (iPoint = 0; iPoint < nPoint; iPoint++) {
+        if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) {
+            
+            /*--- Set the old solution ---*/
+            
+            node[iPoint]->Set_OldSolution();
+            
+            /*--- Extract the adjoint solution ---*/
+            
+            direct_solver->node[iPoint]->GetAdjointSolution(Solution);
+            
+            /*--- Store the adjoint solution ---*/
+            
+            node[iPoint]->SetSolution(Solution);
+            
+        }
     }
     
     if (time_n_needed) {
-        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-            
-            /*--- Extract the adjoint solution at time n ---*/
-            
-            direct_solver->node[iPoint]->GetAdjointSolution_time_n(Solution);
-            
-            /*--- Store the adjoint solution at time n ---*/
-            
-            node[iPoint]->Set_Solution_time_n(Solution);
+        for (iPoint = 0; iPoint < nPoint; iPoint++) {
+            if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) {
+                
+                /*--- Extract the adjoint solution at time n ---*/
+                
+                direct_solver->node[iPoint]->GetAdjointSolution_time_n(Solution);
+                
+                /*--- Store the adjoint solution at time n ---*/
+                
+                node[iPoint]->Set_Solution_time_n(Solution);
+                
+            }
         }
     }
     if (time_n1_needed) {
-        for (iPoint = 0; iPoint < nPoint_coarse; iPoint++) {
-            
-            /*--- Extract the adjoint solution at time n-1 ---*/
-            
-            direct_solver->node[iPoint]->GetAdjointSolution_time_n1(Solution);
-            
-            /*--- Store the adjoint solution at time n-1 ---*/
-            
-            node[iPoint]->Set_Solution_time_n1(Solution);
+        for (iPoint = 0; iPoint < nPoint; iPoint++) {
+            if(geometry->node[iPoint]->GetGlobalIndex() < nPoint_coarse) {
+                
+                /*--- Extract the adjoint solution at time n-1 ---*/
+                
+                direct_solver->node[iPoint]->GetAdjointSolution_time_n1(Solution);
+                
+                /*--- Store the adjoint solution at time n-1 ---*/
+                
+                node[iPoint]->Set_Solution_time_n1(Solution);
+                
+            }
         }
     }
 }
