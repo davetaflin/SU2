@@ -157,7 +157,7 @@ public:
                        CFreeFormDefBox*** FFDBox,
                        unsigned short val_iZone,
                        unsigned short val_iInst,
-                       unsigned long nPoint_coarse);
+                       unsigned long nPoint_coarse) {};
   
   /*!
    * \brief A virtual member.
@@ -725,7 +725,7 @@ public:
                  CFreeFormDefBox*** FFDBox,
                  unsigned short val_iZone,
                  unsigned short val_iInst,
-                 unsigned long nPoint_coarse) {};
+                 unsigned long nPoint_coarse){};
 
   /*!
    * \brief Updates the containers for the heat system.
@@ -1518,7 +1518,7 @@ public:
                  CFreeFormDefBox*** FFDBox,
                  unsigned short val_iZone,
                  unsigned short val_iInst,
-                 unsigned long nPoint_coarse) {};
+                 unsigned long nPoint_coarse){};
 
   /*!
    * \brief Updates the containers for the discrete adjoint mean flow system.
