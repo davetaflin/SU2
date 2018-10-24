@@ -58,5 +58,5 @@
 #elif CODI_PRIMAL_INDEX_TAPE
   typedef codi::RealReversePrimalIndex su2double;
 #else
-  typedef codi::RealReverse su2double;
+  typedef codi::RealForwardOverReverse su2double;
 #endif

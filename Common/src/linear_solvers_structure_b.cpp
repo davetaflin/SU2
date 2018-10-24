@@ -45,87 +45,87 @@ void CSysSolve_b::Solve_b(AD::Tape* tape, AD::CheckpointHandler* data) {
   
   /*--- Extract data from the checkpoint handler ---*/
 
-  su2double::GradientData *LinSysRes_Indices;
-  su2double::GradientData *LinSysSol_Indices;
+//  su2double::GradientData *LinSysRes_Indices;
+//  su2double::GradientData *LinSysSol_Indices;
 #if CODI_PRIMAL_INDEX_TAPE
   su2double::Real *oldValues;
 #endif
 
-  data->getData(LinSysRes_Indices);
-  data->getData(LinSysSol_Indices);
+//  data->getData(LinSysRes_Indices);
+//  data->getData(LinSysSol_Indices);
 #if CODI_PRIMAL_INDEX_TAPE
   data->getData(oldValues);
 #endif
 
-  unsigned long nBlk = 0, nVar = 0, nBlkDomain = 0, size = 0, i = 0;
+//  unsigned long nBlk = 0, nVar = 0, nBlkDomain = 0, size = 0, i = 0;
 
-  data->getData(size);
-  data->getData(nBlk);
-  data->getData(nVar);
-  data->getData(nBlkDomain);
+//  data->getData(size);
+//  data->getData(nBlk);
+//  data->getData(nVar);
+//  data->getData(nBlkDomain);
 
-  CSysMatrix* Jacobian = NULL;
-  data->getData(Jacobian);
+//  CSysMatrix* Jacobian = NULL;
+//  data->getData(Jacobian);
 
-  CGeometry* geometry  = NULL;
-  data->getData(geometry);
+//  CGeometry* geometry  = NULL;
+//  data->getData(geometry);
 
-  CConfig* config      = NULL;
-  data->getData(config);
+//  CConfig* config      = NULL;
+//  data->getData(config);
 
-  CSysVector LinSysRes_b(nBlk, nBlkDomain, nVar, 0.0);
-  CSysVector LinSysSol_b(nBlk, nBlkDomain, nVar, 0.0);
-  su2double Residual;
+//  CSysVector LinSysRes_b(nBlk, nBlkDomain, nVar, 0.0);
+//  CSysVector LinSysSol_b(nBlk, nBlkDomain, nVar, 0.0);
+//  su2double Residual;
 
-  unsigned long MaxIter = config->GetLinear_Solver_Iter();
-  su2double SolverTol = config->GetLinear_Solver_Error();
+//  unsigned long MaxIter = config->GetLinear_Solver_Iter();
+//  su2double SolverTol = config->GetLinear_Solver_Error();
 
   /*--- Initialize the right-hand side with the gradient of the solution of the primal linear system ---*/
 
-  for (i = 0; i < size; i ++) {
-    su2double::GradientData& index = LinSysSol_Indices[i];
-    LinSysRes_b[i] = AD::globalTape.getGradient(index);
-    LinSysSol_b[i] = 0.0;
-    AD::globalTape.gradient(index) = 0.0;
-  }
+//  for (i = 0; i < size; i ++) {
+//    su2double::GradientData& index = LinSysSol_Indices[i];
+//    LinSysRes_b[i] = AD::globalTape.getGradient(index);
+//    LinSysSol_b[i] = 0.0;
+//    AD::globalTape.gradient(index) = 0.0;
+//  }
   /*--- Set up preconditioner and matrix-vector product ---*/
 
-  CPreconditioner* precond  = NULL;
+//  CPreconditioner* precond  = NULL;
 
-  switch(config->GetKind_DiscAdj_Linear_Prec()) {
-    case ILU:
-      precond = new CILUPreconditioner(*Jacobian, geometry, config);
-      break;
-    case JACOBI:
-      precond = new CJacobiPreconditioner(*Jacobian, geometry, config);
-      break;
-  }
+//  switch(config->GetKind_DiscAdj_Linear_Prec()) {
+//    case ILU:
+//      precond = new CILUPreconditioner(*Jacobian, geometry, config);
+//      break;
+//    case JACOBI:
+//      precond = new CJacobiPreconditioner(*Jacobian, geometry, config);
+//      break;
+//  }
 
-  CMatrixVectorProduct* mat_vec = new CSysMatrixVectorProductTransposed(*Jacobian, geometry, config);
+//  CMatrixVectorProduct* mat_vec = new CSysMatrixVectorProductTransposed(*Jacobian, geometry, config);
 
-  CSysSolve *solver = new CSysSolve;
+//  CSysSolve *solver = new CSysSolve;
 
   /*--- Solve the system ---*/
 
-  switch(config->GetKind_DiscAdj_Linear_Solver()) {
-    case FGMRES:
-      solver->FGMRES_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol , MaxIter, &Residual, false);
-      break;
-    case BCGSTAB:
-      solver->BCGSTAB_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol , MaxIter, &Residual, false);
-      break;
-    case CONJUGATE_GRADIENT:
-      solver->CG_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol, MaxIter, &Residual, false);
-      break;
-  }
+//  switch(config->GetKind_DiscAdj_Linear_Solver()) {
+//    case FGMRES:
+//      solver->FGMRES_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol , MaxIter, &Residual, false);
+//      break;
+//    case BCGSTAB:
+//      solver->BCGSTAB_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol , MaxIter, &Residual, false);
+//      break;
+//    case CONJUGATE_GRADIENT:
+//      solver->CG_LinSolver(LinSysRes_b, LinSysSol_b, *mat_vec, *precond, SolverTol, MaxIter, &Residual, false);
+//      break;
+//  }
 
 
   /*--- Update the gradients of the right-hand side of the primal linear system ---*/
 
-  for (i = 0; i < size; i ++) {
-    su2double::GradientData& index = LinSysRes_Indices[i];
-    AD::globalTape.gradient(index) += SU2_TYPE::GetValue(LinSysSol_b[i]);
-  }
+//  for (i = 0; i < size; i ++) {
+//    su2double::GradientData& index = LinSysRes_Indices[i];
+//    AD::globalTape.gradient(index) += SU2_TYPE::GetValue(LinSysSol_b[i]);
+//  }
 
 #if CODI_PRIMAL_INDEX_TAPE
   /*--- Set the old values that have been overwritten ---*/
@@ -134,9 +134,9 @@ void CSysSolve_b::Solve_b(AD::Tape* tape, AD::CheckpointHandler* data) {
   }
 #endif
 
-  delete mat_vec;
-  delete precond;
-  delete solver;
+//  delete mat_vec;
+//  delete precond;
+//  delete solver;
 }
 
 void CSysSolve_b::Solve_g(AD::Tape* tape, AD::CheckpointHandler* data){

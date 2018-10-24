@@ -37,17 +37,27 @@
 #pragma once
 
 namespace SU2_TYPE{
-  inline void SetValue(su2double& data, const double &val) {data.setValue(val);}
+//  inline void SetValue(su2double& data, const double &val) {data.setValue(val);}
+  inline void SetValue(su2double& data, const double &val){data.value().value() = val;}
 
-  inline double GetValue(const su2double& data) { return data.getValue();}
+//  inline double GetValue(const su2double& data) { return data.getValue();}
+  inline double GetValue(const su2double& data){return data.getValue().getValue();}
 
-  inline void SetSecondary(su2double& data, const double &val) {data.setGradient(val);}
+//  inline void SetSecondary(su2double& data, const double &val) {data.setGradient(val);}
+  inline double GetDerivative(const su2double& data){return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]).getValue();}
 
-  inline double GetSecondary(const su2double& data) { return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]);}
+//  inline double GetSecondary(const su2double& data) { return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]);}
+  inline void SetDerivative(su2double& data, const double &val){data.gradient().value() = val;}
 
-  inline double GetDerivative(const su2double& data) { return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]);}
+//  inline double GetDerivative(const su2double& data) { return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]);}
+  inline double GetForwardDerivative(const su2double& data){return data.getValue().getGradient();}
 
-  inline void SetDerivative(su2double& data, const double &val) {data.setGradient(val);}
+//  inline void SetDerivative(su2double& data, const double &val) {data.setGradient(val);}
+  inline double SetForwardDerivative(su2double& data, const double &val){data.value().gradient() = val;}
+    
+  inline double GetMixedDerivative(const su2double& data){return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]).getGradient();}
+    
+  inline double SetMixedDerivative(su2double& data, const double &val){data.gradient().gradient() = val;}
 }
 
 /*--- Object for the definition of getValue used in the printfOver definition.
