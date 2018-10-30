@@ -53,11 +53,11 @@ namespace SU2_TYPE{
   inline double GetForwardDerivative(const su2double& data){return data.getValue().getGradient();}
 
 //  inline void SetDerivative(su2double& data, const double &val) {data.setGradient(val);}
-  inline double SetForwardDerivative(su2double& data, const double &val){data.value().gradient() = val;}
+  inline void SetForwardDerivative(su2double& data, const double &val){data.value().gradient() = val;}
     
   inline double GetMixedDerivative(const su2double& data){return AD::globalTape.getGradient(AD::inputValues[AD::adjointVectorPosition++]).getGradient();}
     
-  inline double SetMixedDerivative(su2double& data, const double &val){data.gradient().gradient() = val;}
+  inline void SetMixedDerivative(su2double& data, const double &val){data.gradient().gradient() = val;}
 }
 
 /*--- Object for the definition of getValue used in the printfOver definition.
