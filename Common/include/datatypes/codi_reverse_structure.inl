@@ -67,7 +67,14 @@ namespace SU2_TYPE{
 template<class A> struct Impl_getValue<codi::Expression<double, A> > {
   typedef double OUT;
   static inline OUT getValue(const codi::Expression<double, A> &value) {
-    return value.getValue().getValue();
+    return value.getValue();
   }
+};
+
+template<class A> struct Impl_getValue<codi::Expression<su2double, A> > {
+    typedef double OUT;
+    static inline OUT getValue(const codi::Expression<su2double, A> &value) {
+        return value.getValue().getValue();
+    }
 };
 

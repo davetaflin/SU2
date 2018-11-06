@@ -70,7 +70,8 @@ template< typename IN > struct Impl_getValue {
 template<> struct Impl_getValue<su2double> {
   typedef double OUT;
   static inline OUT getValue(const su2double& value) {
-    return SU2_TYPE::GetValue(value);
+//    return SU2_TYPE::GetValue(value);
+    return value.value().value();
   }
 };
 

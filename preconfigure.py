@@ -294,6 +294,7 @@ def init_codi(argument_dict, modes, mpi_support = False, update = False):
     sha_version_codi = 'bd4a639c2fe625a80946c8365bd2976a2868cf46'
     github_repo_codi = 'https://github.com/scicompkl/CoDiPack'
     sha_version_medi = '46a97e1d6e8fdd3cb42b06534cff6acad2a49693'
+    sha_version_medi = '0fd9710ace60fe3f9960cb58d2b13c7c2780e89b'
     github_repo_medi = 'https://github.com/SciCompKL/MeDiPack'
 
     medi_name = 'MeDiPack'
