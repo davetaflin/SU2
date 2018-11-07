@@ -5,4 +5,5 @@
 [submodule "externals/medi"]
 	path = externals/medi
 	url = https://github.com/SciCompKL/MeDiPack
+	branch = bugfixSecondOrder
 	ignore = dirty
