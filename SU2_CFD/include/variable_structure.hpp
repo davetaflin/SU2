@@ -4,7 +4,7 @@
  *        each kind of governing equation (direct, adjoint and linearized).
  *        The subroutines and functions are in the <i>variable_structure.cpp</i> file.
  * \author F. Palacios, T. Economon
- * \version 6.1.0 "Falcon"
+ * \version 6.2.0 "Falcon"
  *
  * The current SU2 release has been coordinated by the
  * SU2 International Developers Society <www.su2devsociety.org>
@@ -20,7 +20,7 @@
  *  - Prof. Edwin van der Weide's group at the University of Twente.
  *  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
  *
- * Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+ * Copyright 2012-2019, Francisco D. Palacios, Thomas D. Economon,
  *                      Tim Albring, and the SU2 contributors.
  *
  * SU2 is free software; you can redistribute it and/or
@@ -357,12 +357,6 @@ public:
    * \return Pointer to the solution (at time n-1) vector.
    */
   su2double *GetSolution_time_n1(void);
-  
-  /*!
-   * \brief Get the fem solution at time n.
-   * \return Pointer to the solution (at time n) vector.
-   */
-  virtual su2double *Get_femSolution_time_n(void);
 
   /*!
    * \brief Set the value of the old residual.
@@ -2021,7 +2015,7 @@ public:
    * \param[in] val_var - Index of the variable.
    * \return Value of the solution for the index <i>val_var</i>.
    */
-  virtual su2double GetSolution_time_n(unsigned short val_var);
+  su2double GetSolution_time_n(unsigned short val_var);
   
   /*!
    * \brief Get the velocity (Structural Analysis).
@@ -2345,15 +2339,13 @@ public:
   virtual su2double GetDual_Time_Derivative(unsigned short iVar);
   
   virtual su2double GetDual_Time_Derivative_n(unsigned short iVar);
-  
-  /*!
-   * \brief Virtual member. 
-   */
+
+  virtual void SetTauWall(su2double val_tau_wall);
+
+  virtual su2double GetTauWall();
+
   virtual void SetVortex_Tilting(su2double **PrimGrad_Flow, su2double* Vorticity, su2double LaminarViscosity);
- 
-  /*!
-   * \brief Virtual member. 
-   */
+
   virtual su2double GetVortex_Tilting();
   
   virtual void SetDynamic_Derivative(unsigned short iVar, su2double der);
@@ -2506,11 +2498,12 @@ public:
  * \class CHeatFVMVariable
  * \brief Main class for defining the variables of the finite-volume heat equation solver.
  * \author O. Burghardt
- * \version 6.1.0 "Falcon"
+ * \version 6.2.0 "Falcon"
  */
 class CHeatFVMVariable : public CVariable {
 protected:
   su2double *Solution_Direct;  /*!< \brief Direct solution container for use in the adjoint Heat solver. */
+  su2double* Solution_BGS_k;    /*!< \brief Old solution container for BGS iterations ---*/
   
 public:
   
@@ -2536,56 +2529,11 @@ public:
 };
 
 /*!
- * \class CHeatVariable
- * \brief Main class for defining the variables of the Heat equation solver.
- * \ingroup Potential_Flow_Equation
- * \author F. Palacios
- */
-class CHeatVariable : public CVariable {
-protected:
-  su2double *Solution_Direct;  /*!< \brief Direct solution container for use in the adjoint Heat solver. */
-  
-public:
-  
-  /*!
-   * \brief Constructor of the class.
-   */
-  CHeatVariable(void);
-  
-  /*!
-   * \overload
-   * \param[in] val_Heat - Values of the Heat solution (initialization value).
-   * \param[in] val_nDim - Number of dimensions of the problem.
-   * \param[in] val_nvar - Number of variables of the problem.
-   * \param[in] config - Definition of the particular problem.
-   */
-  CHeatVariable(su2double *val_Heat, unsigned short val_nDim, unsigned short val_nvar, CConfig *config);
-  
-  /*!
-   * \brief Destructor of the class.
-   */
-  ~CHeatVariable(void);
-  
-  /*!
-   * \brief Set the direct solution for the adjoint solver.
-   * \param[in] val_solution_direct - Value of the direct solution.
-   */
-  void SetSolution_Direct(su2double *val_solution_direct);
-  
-  /*!
-   * \brief Get the direct solution for the adjoint solver.
-   * \return Pointer to the direct solution vector.
-   */
-  su2double *GetSolution_Direct(void);
-  
-};
-
-/*!
  * \class CFEAVariable
  * \brief Main class for defining the variables of the FEM Linear Elastic structural problem.
  * \ingroup Structural Finite Element Analysis Variables
  * \author F. Palacios, R. Sanchez.
- * \version 4.0.0 "Cardinal"
+ * \version 6.2.0 "Falcon"
  */
 class CFEAVariable : public CVariable {
 protected:
@@ -2603,8 +2551,6 @@ protected:
   su2double *Residual_Ext_Body;        /*!< \brief Term of the residual due to body forces */
   
   su2double VonMises_Stress;         /*!< \brief Von Mises stress. */
-  
-  su2double *Solution_time_n;        /*!< \brief Displacement at the nodes at time n */
   
   su2double *Solution_Vel,          /*!< \brief Velocity of the nodes. */
   *Solution_Vel_time_n;          /*!< \brief Velocity of the nodes at time n. */
@@ -2802,25 +2748,6 @@ public:
    * \param[in] val_solution_old - Value of the old solution for the index <i>val_var</i>.
    */
   void SetSolution_Vel_time_n(unsigned short val_var, su2double val_solution_vel_time_n);
-  
-  /*!
-   * \brief Get the solution at time n.
-   * \param[in] val_var - Index of the variable.
-   * \return Value of the solution for the index <i>val_var</i>.
-   */
-  su2double GetSolution_time_n(unsigned short val_var);
-  
-  /*!
-   * \brief Get the fem solution at time n.
-   * \return Pointer to the solution (at time n) vector.
-   */
-  su2double *Get_femSolution_time_n(void);
-  
-  /*!
-   * \brief Get the solution at time n.
-   * \return Pointer to the solution (at time n) vector.
-   */
-  su2double *GetSolution_time_n(void);
   
   /*!
    * \brief Get the velocity (Structural Analysis).
@@ -3104,7 +3031,6 @@ public:
  * \class CFEABoundVariable
  * \brief Main class for defining the variables on the FEA boundaries for FSI applications.
  * \author R. Sanchez.
- * \version 3.2.3 "eagle"
  */
 class CFEABoundVariable : public CVariable {
 protected:
@@ -3886,6 +3812,7 @@ private:
   su2double Viscosity_Inf;   /*!< \brief Viscosity of the fluid at the infinity. */
   su2double Vorticity[3];    /*!< \brief Vorticity of the fluid. */
   su2double StrainMag;       /*!< \brief Magnitude of rate of strain tensor. */
+  su2double Tau_Wall;        /*!< \brief Magnitude of the wall shear stress from a wall function. */
   su2double DES_LengthScale; /*!< \brief DES Length Scale. */
   su2double inv_TimeScale;   /*!< \brief Inverse of the reference time scale. */
   su2double Roe_Dissipation; /*!< \brief Roe low dissipation coefficient. */
@@ -4037,6 +3964,17 @@ public:
    * \brief Set all the secondary variables (partial derivatives) for compressible flows
    */
   void SetSecondaryVar(CFluidModel *FluidModel);
+
+  /*! 
+   * \brief Set the value of the wall shear stress computed by a wall function.
+   */
+  void SetTauWall(su2double val_tau_wall);
+  
+  /*!
+   * \brief Get the value of the wall shear stress computed by a wall function.
+   * \return Value of the wall shear stress computed by a wall function.
+   */
+  su2double GetTauWall(void);
   
   /*!
    * \brief Get the DES length scale
@@ -4055,22 +3993,22 @@ public:
    * \param[in] val_const_DES - The DES constant (C_DES)
    */
   void SetRoe_Dissipation_NTS(su2double val_delta, su2double val_const_DES);
-    
+
   /*!
    * \brief Set the new solution for Roe Dissipation.
    */
   void SetRoe_Dissipation_FD(su2double wall_distance);
-    
+  
   /*!
- * \brief Get the Roe Dissipation Coefficient.
- * \return Value of the Roe Dissipation.
- */
+   * \brief Get the Roe Dissipation Coefficient.
+   * \return Value of the Roe Dissipation.
+   */
   su2double GetRoe_Dissipation(void);
   
   /*!
- * \brief Set the Roe Dissipation Coefficient.
- * \param[in] val_dissipation - Value of the Roe dissipation factor.
- */
+   * \brief Set the Roe Dissipation Coefficient.
+   * \param[in] val_dissipation - Value of the Roe dissipation factor.
+   */
   void SetRoe_Dissipation(su2double val_dissipation);
   
 };
@@ -4892,7 +4830,7 @@ public:
  * \brief Main class for defining the variables of the adjoint solver.
  * \ingroup Discrete_Adjoint
  * \author T. Albring, R. Sanchez.
- * \version 4.2.0 "Cardinal"
+ * \version 6.2.0 "Falcon"
  */
 class CDiscAdjFEAVariable : public CVariable {
 private:
@@ -5036,13 +4974,6 @@ public:
       * \return Pointer to the old solution vector.
       */
      su2double GetSolution_Vel_time_n(unsigned short val_var);
-
-       /*!
-      * \brief Get the solution at time n.
-      * \param[in] val_var - Index of the variable.
-      * \return Value of the solution for the index <i>val_var</i>.
-      */
-     su2double GetSolution_time_n(unsigned short val_var);
 
     /*!
      * \brief Set the value of the old solution.
