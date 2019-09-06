@@ -1097,13 +1097,15 @@ int64_t GetHaloNodeNumber(unsigned long global_node_number, unsigned long last_l
 
 #endif /* HAVE_MPI */
 
-void COutput::WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, unsigned short val_iZone, unsigned short val_nZone, bool surf_sol) {
+void COutput::WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, unsigned short val_iZone, unsigned short val_nZone, bool surf_sol, bool write_insitu) {
 
 #ifdef HAVE_TECIO
   
   /*--- Open Tecplot binary file. ---*/
   
   string filename = GetTecplotFilename(config, val_iZone, val_nZone, surf_sol, ".szplt");
+  if (write_insitu)
+    filename = std::string("M1") + filename;
   
   string data_set_title = surf_sol
     ? "Visualization of the surface solution"
@@ -1119,6 +1121,13 @@ void COutput::WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, 
   int32_t err = tecFileWriterOpen(filename.c_str(), data_set_title.c_str(), tecplot_variable_names.str().c_str(),
     FILEFORMAT_SZL, FILETYPE_FULL, (int32_t)FieldDataType_Double, NULL, &file_handle);
   if (err) cout << "Error opening Tecplot file '" << filename << "'" << endl;
+
+  if (write_insitu)
+  {
+    int32_t varsel;
+    err = tecFileCreateVarSelection(file_handle, 12, 1.0, 1.0, &varsel);
+    if (err) cout << "Error creating Tecplot variable filter." << endl;
+  }
 
 #ifdef HAVE_MPI
   err = tecMPIInitialize(file_handle, MPI_COMM_WORLD, MASTER_NODE);

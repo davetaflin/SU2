@@ -647,7 +647,7 @@ subroutine GatherGhostNodesAndCells( &
         iDim(1), jDim(1), &                                       ! I- and J-dimensions
         iDim(1) - 1, iDim(1), jMin(3) + 2, jMax(3), 0, kDim(1), & ! local index ranges
         iDim(3), jDim(3), &                                       ! I- and J-dimensions
-        2, 3, 0, jDim(3), 0, kDim(3), .true.)                     ! local index ranges
+        2, 3, 2, jDim(3), 0, kDim(3), .true.)                     ! local index ranges
     ! Cells owned by the second partition:
     call appendGhostItems( &
         nGCells(1), gcptr, NULL, NULL, 2, &
@@ -661,7 +661,7 @@ subroutine GatherGhostNodesAndCells( &
         iDim(1) - 1, jDim(1) - 1, &                                           ! I- and J-dimensions
         iDim(1) - 2, iDim(1) - 1, jDim(2) - 2, jDim(1) - 1, 0, kDim(1) - 1, & ! local index ranges
         iDim(3) - 1, jDim(3) - 1, &                                           ! I- and J-dimensions
-        1, 2, 0, jDim(3) - 1, 0, kDim(3), .false.)                            ! local index ranges
+        1, 2, 1, jDim(3) - 1, 0, kDim(3), .false.)                            ! local index ranges
 
     nGNodes(2) = 0
     nGCells(2) = 0
@@ -725,7 +725,7 @@ subroutine GatherGhostNodesAndCells( &
         0, 1, 0, jDim(3) - 1, 0, kDim(3) - 1, &                                  ! local index ranges
         iDim(1) - 1, jDim(1) - 1, &                                              ! I- and J-dimensions
         iDim(1) - 2, iDim(1) - 1, jMin(3), jMax(3) - 1, 0, kDim(1) - 1, .false.) ! local index ranges
-    ! Nodes owned by the second partition.
+    ! Cells owned by the second partition.
     call appendGhostItems( &
         nGCells(3), gcPtr, NULL, NULL, 2, &
         iDim(3) - 1, jDim(3) - 1, &                                        ! I- and J-dimensions

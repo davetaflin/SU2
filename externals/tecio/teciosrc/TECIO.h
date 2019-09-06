@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * TECIO.h: Copyright (C) 1988-2014 Tecplot, Inc.
+ * TECIO.h: Copyright (C) 1988-2019 Tecplot, Inc.
  */
 
 #if defined TECIOMPI
@@ -103,6 +103,40 @@ EXTERNC tecio_API int32_t tecFileWriterOpen(
 EXTERNC tecio_API int32_t tecFileSetDiagnosticsLevel(
     void*   fileHandle,
     int32_t level);
+
+
+/**
+ * In-situ support. After calling tecFileWriterOpen, call 
+ * tecFileCreateVarSelection to output only those (volume) cells
+ * that intersect the specified range of the specified variable.
+ * Linear and surface zones are unaffected.
+ *
+ * @param fileHandle
+ *    Handle to the file to be filtered.
+ *
+ * @param var
+ *    The number of the variable whose values will be used to select cells for output.
+ *    1 would refer to the first variable in the variableList passed to tecFileWriterOpen.
+ *
+ * @param minValue
+ *    The minimum value of the range of var to output.
+ *
+ * @param maxValue
+ *    The maximum value of the range of var to output.
+ *
+ * @param varSelection
+ *    The returned handle to the variable selection, reserved for future use
+ *    in specifying more complicated selection criteria.
+ *
+ * @return
+ *    0 for success, -1 for failure.
+ */
+EXTERNC tecio_API int32_t tecFileCreateVarSelection(
+    void*    fileHandle,
+    int32_t  var,
+    double   minValue,
+    double   maxValue,
+    int32_t* varSelection);
 
 #if defined TECIOMPI
 EXTERNC tecio_API int32_t tecMPIInitialize(
@@ -541,8 +575,7 @@ EXTERNC tecio_API int32_t tecCustomLabelsGetNumSets(
     void*    fileHandle,
     int32_t* numSets);
 
-EXTERNC tecio_API int32_t
-tecCustomLabelsGetSet(
+EXTERNC tecio_API int32_t tecCustomLabelsGetSet(
     void*   fileHandle,
     int32_t whichSet,
     char**  labelSet);
@@ -1103,6 +1136,7 @@ EXTERNC tecio_API int32_t tecZoneVarIsPassive(
 #if !defined CRAY
 #  define TECINI142       tecini142
 #  define TECZNE142       teczne142
+#  define TECPOLYZNE142   tecpolyzne142
 #  define TECDAT142       tecdat142
 #  define TECDATD142      tecdatd142
 #  define TECDATF142      tecdatf142
@@ -1123,17 +1157,16 @@ EXTERNC tecio_API int32_t tecZoneVarIsPassive(
 #  define TECPOLY142      tecpoly142
 #  define TECPOLYFACE142  tecpolyface142
 #  define TECPOLYBCONN142 tecpolybconn142
-/*
-* SZL-only API:
-*/
+/* Partition APIs (SZL only) */
 #  define TECFEPTN142   tecfeptn142
 #  define TECIJKPTN142  tecijkptn142
-
-/*
-* SZL MPI-only APIs:
-*/
+/* In-situ API (SZL only)*/
+#  define TECVARSEL142  tecvarsel142
+/* MPI APIs (SZL only) */
 #  define TECMPIINIT142 tecmpiinit142
 #  define TECZNEMAP142  tecznemap142
+/* Internal test API */
+#  define TECINTERNAL142  tecinternal142
 
 /*
 * Older API versions:
@@ -1257,6 +1290,23 @@ EXTERNC tecio_API INTEGER4 STDCALL TECZNE142(
     INTEGER4 const* ShareVarFromZone,
     INTEGER4 const* ShareConnectivityFromZone);
 
+EXTERNC tecio_API int32_t STDCALL TECPOLYZNE142(
+    char const*     ZoneTitle,
+    INTEGER4 const* ZoneType,
+    INTEGER4 const* NumNodes,
+    INTEGER4 const* NumCells,
+    INTEGER8 const* NumFaces,
+    INTEGER8 const* TotalNumFaceNodes,
+    double const*   SolutionTime,
+    INTEGER4 const* StrandID,
+    INTEGER4 const* ParentZone,
+    INTEGER4 const* NumConnectedBoundaryFaces,
+    INTEGER4 const* TotalNumBoundaryConnections,
+    INTEGER4 const* PassiveVarList,
+    INTEGER4 const* ValueLocation,
+    INTEGER4 const* ShareVarFromZone,
+    INTEGER4 const* ShareConnectivityFromZone); 
+
 EXTERNC tecio_API INTEGER4 STDCALL TECDAT142(
     INTEGER4 const* N,
     void const*     FieldData,
@@ -1357,6 +1407,9 @@ EXTERNC tecio_API INTEGER4 STDCALL TECVAUXSTR142(
 
 EXTERNC tecio_API INTEGER4 STDCALL TECFACE142(INTEGER4 const* FaceConnections);
 
+/**
+ * DEPRECATED. Please use functions TECPOLYFACE142 and TECPOLYBCONN142 instead.
+ */
 EXTERNC tecio_API INTEGER4 STDCALL TECPOLY142(
     INTEGER4 const* FaceNodeCounts,
     INTEGER4 const* FaceNodes,
@@ -1379,7 +1432,7 @@ EXTERNC tecio_API INTEGER4 STDCALL TECPOLYBCONN142(
     INTEGER4 const* FaceBndryConnectionElems, 
     INTEGER4 const* FaceBndryConnectionZones);
 
-/* SZL-only APIs: */
+/* Partition APIs (SZL only) */
 EXTERNC tecio_API INTEGER4 STDCALL TECFEPTN142(
     INTEGER4 const* partition,
     INTEGER4 const* numnodes,
@@ -1400,7 +1453,35 @@ EXTERNC tecio_API INTEGER4 STDCALL TECIJKPTN142(
     INTEGER4 const* jmax,
     INTEGER4 const* kmax);
 
-/* SZL MPI-only APIs: */
+/**
+ * In-situ support. After calling TECINI142, call TECVARSEL142 to output
+ * only those (volume) cells that intersect the specified range of the
+ * specified variable. Linear and surface zones are unaffected.
+ *
+ * @param var
+ *    The number of the variable whose values will be used to select cells for output.
+ *    1 would refer to the first variable in the Variables passed to TECINI142.
+ *
+ * @param minVal
+ *    The minimum value of the range of var to output.
+ *
+ * @param maxVal
+ *    The maximum value of the range of var to output.
+ *
+ * @param varSel
+ *    The returned handle to the variable selection, reserved for future use
+ *    in specifying more complicated selection criteria.
+ *
+ * @return
+ *    0 for success, -1 for failure.
+ */
+EXTERNC tecio_API INTEGER4 STDCALL TECVARSEL142(
+    INTEGER4 const* var,
+    double const*   minVal,
+    double const*   maxVal,
+    INTEGER4*       varSel);
+
+/* MPI APIs (SZL only) */
 EXTERNC tecio_API INTEGER4 STDCALL TECMPIINIT142(
     void* communicator, /* MPI_Comm */
     INTEGER4 const* mainrank);
@@ -1408,6 +1489,11 @@ EXTERNC tecio_API INTEGER4 STDCALL TECMPIINIT142(
 EXTERNC tecio_API INTEGER4 STDCALL TECZNEMAP142(
     INTEGER4 const* npartitions,
     INTEGER4 const* ptnranks);
+
+/* Internal test functions */
+EXTERNC tecio_API INTEGER4 STDCALL TECINTERNAL142(
+    const char* command,
+    INTEGER8*   value);
 
 /*
  *  V11.3 tecio functions

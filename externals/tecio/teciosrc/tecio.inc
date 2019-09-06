@@ -2,6 +2,8 @@
 
       INTEGER*4 FUNCTION teczne142
 
+      INTEGER*4 FUNCTION tecpolyzne142
+
       INTEGER*4 FUNCTION tecdat142
 
       INTEGER*4 FUNCTION tecnod142
@@ -30,7 +32,12 @@
       
       INTEGER*4 FUNCTION tecface142
 
+      ! Deprecated. Please use functions tecpolyface142 and tecpolybconn142 instead
       INTEGER*4 FUNCTION tecpoly142
+
+      INTEGER*4 FUNCTION tecpolyface142
+
+      INTEGER*4 FUNCTION tecpolybconn142
 
       INTEGER*4 FUNCTION tecfeptn142
 
@@ -39,3 +46,5 @@
       INTEGER*4 FUNCTION tecmpiinit142
 
       INTEGER*4 FUNCTION tecznemap142
+
+      INTEGER*4 FUNCTION tecvarsel142

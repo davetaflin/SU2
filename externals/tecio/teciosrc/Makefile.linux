@@ -84,6 +84,7 @@ CXXFLAGS = -DLINUX \
 		   -DBOOST_ALL_NO_LIB \
 		   -DMAKEARCHIVE \
 		   -DNO_THIRD_PARTY_LIBS \
+		   -Dtecio_EXPORTS \
 		   -fmessage-length=0 \
 		   -fPIC \
 		   -isystem \

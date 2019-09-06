@@ -1,5 +1,6 @@
  #ifndef _MASTER_H_
  #define _MASTER_H_
+ #define DEFER_TRANSIENT_OPERATIONS
  #if defined TP_ACQUIRES             || \
  defined TP_RELEASES             || \
  defined TP_OUT                  || \

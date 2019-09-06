@@ -255,7 +255,7 @@ static void GatherGhostNodesAndCells(
         iDim[0], jDim[0],                                       /* I- and J-dimensions */
         iDim[0] - 1, iDim[0], jMin[2] + 2, jMax[2], 0, kDim[0], /* local index ranges */
         iDim[2], jDim[2],                                       /* I- and J-dimensions */
-        2, 3, 0, jDim[2], 0, kDim[2]);                          /* local index ranges */
+        2, 3, 2, jDim[2], 0, kDim[2]);                          /* local index ranges */
     /* Cells owned by the second partition: */
     appendGhostItems(
         &nGCells[0], &ghostCells[0], NULL, NULL, 2,
@@ -269,7 +269,7 @@ static void GatherGhostNodesAndCells(
         iDim[0] - 1, jDim[0] - 1,                                           /* I- and J-dimensions */
         iDim[0] - 2, iDim[0] - 1, jDim[1] - 2, jDim[0] - 1, 0, kDim[0] - 1, /* local index ranges */
         iDim[2] - 1, jDim[2] - 1,                                           /* I- and J-dimensions */
-        1, 2, 0, jDim[2] - 1, 0, kDim[2]);                                  /* local index ranges */
+        1, 2, 1, jDim[2] - 1, 0, kDim[2]);                                  /* local index ranges */
 
     nGNodes[1] = 0;
     ghostNodes[1] = NULL;
@@ -333,7 +333,7 @@ static void GatherGhostNodesAndCells(
         0, 1, 0, jDim[2] - 1, 0, kDim[2] - 1,                            /* local index ranges */
         iDim[0] - 1, jDim[0] - 1,                                        /* I- and J-dimensions */
         iDim[0] - 2, iDim[0] - 1, jMin[2], jMax[2] - 1, 0, kDim[0] - 1); /* local index ranges */
-    /* Nodes owned by the second partition. */
+    /* Cells owned by the second partition. */
     appendGhostItems(
         &nGCells[2], &ghostCells[2], NULL, NULL, 2,
         iDim[2] - 1, jDim[2] - 1,                                  /* I- and J-dimensions */

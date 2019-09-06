@@ -33,6 +33,22 @@
         type(c_ptr), value, intent(in)        :: fileHandle
         integer(c_int32_t), value, intent(in) :: level
       end function tecFileSetDiagnosticsLevel
+    
+      integer(c_int32_t) function tecFileCreateVarSelection(
+     &  fileHandle,
+     &  var,
+     &  minValue,
+     &  maxValue,
+     &  varSelection)
+     &  bind(c, name="tecFileCreateVarSelection")
+        use iso_c_binding
+        implicit none
+        type(c_ptr), value, intent(in)        :: fileHandle
+        integer(c_int32_t), value, intent(in) :: var
+        real(c_double), value, intent(in)     :: minValue
+        real(c_double), value, intent(in)     :: maxValue
+        integer(c_int32_t), intent(out)       :: varSelection
+      end function tecFileCreateVarSelection
       
       integer(c_int32_t) function tecMPIInitialize(
      &  fileHandle,
@@ -2369,6 +2385,20 @@
         integer(c_int32_t), intent(in) :: Debug
         integer(c_int32_t), intent(in) :: VIsDouble
       end function tecini142
+    
+      integer(c_int32_t) function tecvarsel142(
+     &  var,
+     &  minValue,
+     &  maxValue,
+     &  varSelection)
+     &  bind(c, name="tecvarsel142")
+        use iso_c_binding
+        implicit none
+        integer(c_int32_t), intent(in)  :: var
+        real(c_double), intent(in)      :: minValue
+        real(c_double), intent(in)      :: maxValue
+        integer(c_int32_t), intent(out) :: varSelection
+      end function tecvarsel142
 
       integer(c_int32_t) function teczne142(
      &  ZoneTitle,
@@ -2417,6 +2447,42 @@
         integer(c_int32_t), intent(in) :: ShareVarFromZone(*)
         integer(c_int32_t), intent(in) :: ShareConnectivityFromZone
       end function teczne142
+
+      integer(c_int32_t) function tecpolyzne142(
+     &  ZoneTitle,
+     &  ZoneType,
+     &  NumNodes,
+     &  NumCells,
+     &  NumFaces,
+     &  TotalNumFaceNodes,
+     &  SolutionTime,
+     &  StrandID,
+     &  ParentZone,
+     &  NumConnectedBoundaryFaces,
+     &  TotalNumBoundaryConnections,
+     &  PassiveVarList,
+     &  ValueLocation,
+     &  ShareVarFromZone,
+     &  ShareConnectivityFromZone)
+     &  bind (c, name="tecpolyzne142")
+        use iso_c_binding
+        implicit none
+        character(c_char), intent(in)  :: ZoneTitle(*)
+        integer(c_int32_t), intent(in) :: ZoneType
+        integer(c_int32_t), intent(in) :: NumNodes
+        integer(c_int32_t), intent(in) :: NumCells
+        integer(c_int64_t), intent(in) :: NumFaces
+        integer(c_int64_t), intent(in) :: TotalNumFaceNodes
+        real(c_double), intent(in)     :: SolutionTime
+        integer(c_int32_t), intent(in) :: StrandID
+        integer(c_int32_t), intent(in) :: ParentZone
+        integer(c_int32_t), intent(in) :: NumConnectedBoundaryFaces
+        integer(c_int32_t), intent(in) :: TotalNumBoundaryConnections
+        integer(c_int32_t), intent(in) :: PassiveVarList(*)
+        integer(c_int32_t), intent(in) :: ValueLocation(*)
+        integer(c_int32_t), intent(in) :: ShareVarFromZone(*)
+        integer(c_int32_t), intent(in) :: ShareConnectivityFromZone
+      end function tecpolyzne142
 
       integer(c_int32_t) function tecdat142(
      &  N,
@@ -2663,6 +2729,7 @@
         integer(c_int32_t), intent(in) :: FaceConnections(*)
       end function tecface142
 
+      ! Deprecated. Please use functions tecpolyface142 and tecpolybconn142 instead:
       integer(c_int32_t) function tecpoly142(
      &  FaceNodeCounts,
      &  FaceNodes,
@@ -2777,4 +2844,15 @@
         integer(c_int32_t), intent(in) :: ptnranks(*)
       end function tecznemap142
 
+      integer(c_int32_t) function tecinternal142(
+     &  command,
+     &  value)
+     &  bind (c, name="tecinternal142")
+        use iso_c_binding
+        implicit none
+        character(c_char), intent(in)  :: command(*)
+        integer(c_int64_t), intent(in) :: value
+      end function tecinternal142
+
       end interface
+

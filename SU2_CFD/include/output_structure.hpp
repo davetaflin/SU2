@@ -625,7 +625,7 @@ public:
    * \param[in] val_nZone - Total number of zones.
    * \param[in] surf_sol - Flag controlling whether this is a volume or surface file.
    */
-  void WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, unsigned short val_iZone, unsigned short val_nZone, bool surf_sol);
+  void WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, unsigned short val_iZone, unsigned short val_nZone, bool surf_sol, bool write_insitu);
   
   /*!
    * \brief Write the nodal coordinates and connectivity to a Tecplot binary mesh file.

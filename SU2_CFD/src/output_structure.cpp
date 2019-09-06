@@ -12450,7 +12450,10 @@ void COutput::SetResult_Files_Parallel(CSolver *****solver_container,
 
     if (config[iZone]->GetWrt_Binary_Restart()) {
       if (rank == MASTER_NODE) cout << "Writing binary SU2 native restart file." << endl;
+      passivedouble start_time = (passivedouble)clock() / CLOCKS_PER_SEC;
       WriteRestart_Parallel_Binary(config[iZone], geometry[iZone][iInst][MESH_0], solver_container[iZone][iInst][MESH_0], iZone, iInst);
+      passivedouble end_time = (passivedouble)clock() / CLOCKS_PER_SEC;
+      if (rank == MASTER_NODE) cout << "Time for write: " << end_time - start_time << " s" << endl;
     } else {
       if (rank == MASTER_NODE) cout << "Writing ASCII SU2 native restart file." << endl;
       WriteRestart_Parallel_ASCII(config[iZone], geometry[iZone][iInst][MESH_0], solver_container[iZone][iInst][MESH_0], iZone, iInst);
@@ -12519,9 +12522,19 @@ void COutput::SetResult_Files_Parallel(CSolver *****solver_container,
 
             /*--- Write a Tecplot ASCII file instead for now in serial. ---*/
 
-            if (rank == MASTER_NODE) cout << "Writing Tecplot binary volume solution file." << endl;
-            WriteTecplotBinary_Parallel(config[iZone], geometry[iZone][iInst][MESH_0],
-                iZone, val_nZone, false);
+            {
+              if (rank == MASTER_NODE) cout << "Writing Tecplot binary volume solution file." << endl;
+              passivedouble start_time = (passivedouble)clock() / CLOCKS_PER_SEC;
+              WriteTecplotBinary_Parallel(config[iZone], geometry[iZone][iInst][MESH_0],
+                  iZone, val_nZone, false, false);
+              passivedouble end_time = (passivedouble)clock() / CLOCKS_PER_SEC;
+              if (rank == MASTER_NODE) cout << "Time for full write: " << end_time - start_time << " s" << endl;
+              start_time = end_time;
+              WriteTecplotBinary_Parallel(config[iZone], geometry[iZone][iInst][MESH_0],
+                  iZone, val_nZone, false, true);
+              end_time = (passivedouble)clock() / CLOCKS_PER_SEC;
+              if (rank == MASTER_NODE) cout << "Time for in-situ write: " << end_time - start_time << " s" << endl;
+            }
             break;
 
           case FIELDVIEW_BINARY:
@@ -12575,7 +12588,7 @@ void COutput::SetResult_Files_Parallel(CSolver *****solver_container,
 
             if (rank == MASTER_NODE) cout << "Writing Tecplot binary surface solution file." << endl;
             WriteTecplotBinary_Parallel(config[iZone], geometry[iZone][iInst][MESH_0],
-                iZone, val_nZone, true);
+                iZone, val_nZone, true, false);
             break;
 
           case PARAVIEW:

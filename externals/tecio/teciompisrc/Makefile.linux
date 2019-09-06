@@ -82,6 +82,8 @@ CXXFLAGS = -DLINUX \
 		   -DNO_THIRD_PARTY_LIBS \
 		   -DTECIOMPI \
 		   -DOMPI_SKIP_MPICXX \
+		   -DMPICH_SKIP_MPICXX \
+		   -Dtecio_EXPORTS \
 		   -fmessage-length=0 \
 		   -fPIC \
 		   -isystem \

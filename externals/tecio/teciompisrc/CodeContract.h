@@ -1,6 +1,9 @@
  #pragma once
+ #ifndef CODE_CONTRACT_H
+ #define CODE_CONTRACT_H
 #include <cstdlib>
 #include <iostream>
+#include <limits>
  #ifndef VALID_REF
  #define VALID_REF(p)      ((p)  != 0)
  #define VALID_FN_REF(___3002)  ((___3002) != 0)
@@ -90,3 +93,7 @@ template<class T> inline bool checkedAssert(T const& expr) { return (expr ? true
  #if !defined VALID_CLASS_ENUM
  #define VALID_CLASS_ENUM(e) (static_cast<std::decay<decltype((e))>::type>(0) <= (e) && (e) < std::decay<decltype((e))>::type::END_ENUM)
  #endif
+ #ifdef __cplusplus
+template <typename TargetType, typename SourceType> inline TargetType checked_numeric_cast(SourceType const& ___4314) { REQUIRE(std::numeric_limits<TargetType>::lowest() <= ___4314 && ___4314 <= std::numeric_limits<TargetType>::max()); return static_cast<TargetType>(___4314); }
+ #endif
+ #endif 

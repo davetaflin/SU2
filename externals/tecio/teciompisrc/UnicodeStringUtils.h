@@ -12,7 +12,7 @@ namespace tecplot {
 common_strutil_API std::wstring utf8ToWideString(std::string const& utf8String); common_strutil_API std::string wideStringToUtf8(const wchar_t* wideString);
  #endif
  #if !defined NO_THIRD_PARTY_LIBS
-common_strutil_API bool isUtf8(char const* stringToTest); common_strutil_API bool isUtf8Checked(char const* stringToTest, std::string const& sourceFile, int line); common_strutil_API char* strToUtf8(std::string const& inputString);
+common_strutil_API bool isUtf8(char const* stringToTest); common_strutil_API bool isUtf8Checked(char const* stringToTest, std::string const& sourceFile, int line); common_strutil_API bool containsNonASCIICharacters(char const* stringToTest); common_strutil_API char* strToUtf8(std::string const& inputString);
  #endif 
 }
  #if !defined NO_THIRD_PARTY_LIBS
