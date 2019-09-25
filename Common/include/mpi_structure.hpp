@@ -60,14 +60,14 @@ class CMediMPIWrapper;
 typedef CMediMPIWrapper SU2_MPI;
 
 #if defined CODI_REVERSE_TYPE
-#include <medi/codiMediPackTypes.hpp>
+#include <codi/externals/codiMediPackTypes.hpp>
 #if CODI_PRIMAL_INDEX_TAPE
 typedef CoDiPackToolPrimalRestore<su2double> MediTool;
 #else
 typedef CoDiPackTool<su2double> MediTool;
 #endif // defined CODI_REVERSE_TYPE
 #elif defined CODI_FORWARD_TYPE
-#include <medi/codiForwardMediPackTypes.hpp>
+#include <codi/externals/codiForwardMediPackTypes.hpp>
 typedef CoDiPackForwardTool<su2double> MediTool;
 #endif // defined CODI_FORWARD_TYPE
 #define AMPI_ADOUBLE ((medi::MpiTypeInterface*)MediTool::MPI_TYPE)
@@ -76,6 +76,15 @@ typedef CoDiPackForwardTool<su2double> MediTool;
 class CBaseMPIWrapper;
 typedef CBaseMPIWrapper SU2_MPI;
 #endif // defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
+
+/*--- Select the appropriate MPI wrapper based on datatype, to use in templated classes. ---*/
+template<class T> struct SelectMPIWrapper { typedef SU2_MPI W; };
+
+/*--- In AD we specialize for the passive wrapper. ---*/
+#if defined CODI_REVERSE_TYPE
+class CBaseMPIWrapper;
+template<> struct SelectMPIWrapper<passivedouble> { typedef CBaseMPIWrapper W; };
+#endif
 
 /*!
  * \class CMPIWrapper
@@ -222,6 +231,8 @@ public:
   static void SetComm(Comm NewComm);
   
   static void Init(int *argc, char***argv);
+
+  static void Init_AMPI(void);
 
   static void Buffer_attach(void *buffer, int size);
 

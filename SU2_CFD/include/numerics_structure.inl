@@ -59,10 +59,6 @@ inline void CNumerics::Compute_Tangent_Matrix(CElement *element_container, CConf
 
 inline void CFEAElasticity::Compute_Tangent_Matrix(CElement *element_container, CConfig *config) { }
 
-inline void CNumerics::Compute_MeanDilatation_Term(CElement *element_container, CConfig *config) { }
-
-inline void CFEAElasticity::Compute_MeanDilatation_Term(CElement *element_container, CConfig *config) { }
-
 inline void CNumerics::Compute_NodalStress_Term(CElement *element_container, CConfig *config) { }
 
 inline void CFEAElasticity::Compute_NodalStress_Term(CElement *element_container, CConfig *config) { }
@@ -82,6 +78,8 @@ inline su2double CFEANonlinearElasticity::deltaij(unsigned short iVar, unsigned 
 }
 
 inline void CNumerics::SetElement_Properties(CElement *element_container, CConfig *config){ }
+
+inline void CNumerics::SetMeshElasticProperties(unsigned long iElem, su2double val_E) { }
 
 inline void CNumerics::ReadDV(CConfig *config){ }
 

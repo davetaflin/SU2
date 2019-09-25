@@ -39,36 +39,6 @@
 
 inline void CSolver::SetIterLinSolver(unsigned short val_iterlinsolver) { IterLinSolver = val_iterlinsolver; }
 
-inline void CSolver::Set_MPI_Solution_Gradient(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Primitive(CGeometry *geometry, CConfig *config) { }
-
-//inline void CSolver::Set_MPI_Secondary(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_Pred(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_Pred_Old(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_DispOnly(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_RefGeom(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_CrossTerm(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_CrossTerm_Geometry(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_Geometry(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Solution_Limiter(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Primitive_Limiter(CGeometry *geometry, CConfig *config) { }
-
-//inline void CSolver::Set_MPI_Secondary_Limiter(CGeometry *geometry, CConfig *config) { }
-
 inline void CSolver::SetNondimensionalization(CConfig *config, unsigned short iMesh) { }
 
 inline unsigned short CSolver::GetIterLinSolver(void) { return IterLinSolver; }
@@ -99,6 +69,8 @@ inline void CSolver::Compute_OFRefGeom(CGeometry *geometry, CSolver **solver_con
 inline void CSolver::Compute_OFRefNode(CGeometry *geometry, CSolver **solver_container, CConfig *config) { }
 
 inline void CSolver::Compute_OFVolFrac(CGeometry *geometry, CSolver **solver_container, CConfig *config) { }
+
+inline void CSolver::Compute_OFCompliance(CGeometry *geometry, CSolver **solver_container, CConfig *config) { }
 
 inline void CSolver::SetForceCoeff(su2double val_forcecoeff_history) { }
 
@@ -133,8 +105,6 @@ inline su2double CSolver::GetPsiE_Inf(void) { return 0; }
 inline void CSolver::SetPrimitive_Gradient_GG(CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::SetPrimitive_Gradient_LS(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Primitive_Gradient(CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::SetPrimitive_Limiter_MPI(CGeometry *geometry, CConfig *config) { }
 
@@ -432,6 +402,8 @@ inline su2double CSolver::GetTotal_OFRefNode() { return 0; }
 
 inline su2double CSolver::GetTotal_OFVolFrac() { return 0; }
 
+inline su2double CSolver::GetTotal_OFCompliance() { return 0; }
+
 inline bool CSolver::IsElementBased(void){ return false; }
 
 inline void CSolver::AddTotal_ComboObj(su2double val_obj) {}
@@ -686,35 +658,29 @@ inline void CSolver::Set_Heatflux_Areas(CGeometry *geometry, CConfig *config) { 
 
 inline void CSolver::Evaluate_ObjFunc(CConfig *config) {};
 
-inline void CSolver::Solve_System(CGeometry *geometry, CSolver **solver_container, CConfig *config) { }
+inline void CSolver::Solve_System(CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::BC_Euler_Wall(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
 									 unsigned short val_marker) { }
 
-inline void CSolver::BC_Clamped(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_Clamped(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
 
-inline void CSolver::BC_DispDir(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_DispDir(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
 
-inline void CSolver::BC_Clamped_Post(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_Clamped_Post(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
                    
-inline void CSolver::BC_Normal_Displacement(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_Normal_Displacement(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
                                                        
-inline void CSolver::BC_Normal_Load(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_Normal_Load(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
 
-inline void CSolver::BC_Dir_Load(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }
+inline void CSolver::BC_Dir_Load(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
                    
-inline void CSolver::BC_Sine_Load(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                   unsigned short val_marker) { }                   
+inline void CSolver::BC_Sine_Load(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
                    
-inline void CSolver::BC_Damper(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, CConfig *config, 
-                                     unsigned short val_marker) { }             									 							 
+inline void CSolver::BC_Damper(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
                   
+inline void CSolver::BC_Deforming(CGeometry *geometry, CNumerics *numerics, CConfig *config, unsigned short val_marker) { }
+
 inline void CSolver::BC_Isothermal_Wall(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics, CConfig *config, unsigned short val_marker) { }
 
 inline void CSolver::BC_HeatFlux_Wall(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics, CConfig *config, unsigned short val_marker) { }
@@ -731,6 +697,9 @@ inline void CSolver::BC_Interface_Boundary(CGeometry *geometry, CSolver **solver
 inline void CSolver::BC_NearField_Boundary(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics,
                                            CConfig *config, unsigned short val_marker) { }
 
+inline void CSolver::BC_Periodic(CGeometry *geometry, CSolver **solver_container,
+                                 CNumerics *numerics, CConfig *config) { }
+
 inline void CSolver::BC_ActDisk_Inlet(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics,
                                       CConfig *config, unsigned short val_marker) { }
 
@@ -746,7 +715,7 @@ inline void CSolver::BC_Far_Field(CGeometry *geometry, CSolver **solver_containe
 inline void CSolver::BC_Sym_Plane(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics, 
                   CConfig *config, unsigned short val_marker) { }
                   
-inline void CSolver::BC_Custom(CGeometry *geometry, CSolver **solver_container, CNumerics *numerics, 
+inline void CSolver::BC_Custom(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics,
                      CConfig *config, unsigned short val_marker) { }
 
 inline void CSolver::BC_Riemann(CGeometry *geometry, CSolver **solver_container, CNumerics *conv_numerics, CNumerics *visc_numerics, 
@@ -852,21 +821,13 @@ inline void CSolver::SetCentered_Dissipation_Sensor(CGeometry *geometry, CConfig
 
 inline void CSolver::SetUpwind_Ducros_Sensor(CGeometry *geometry, CConfig *config) { }
 
-inline void CSolver::Set_MPI_Sensor(CGeometry *geometry, CConfig *config) { }
-
 inline void CSolver::SetUndivided_Laplacian(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_Undivided_Laplacian(CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::Set_MPI_ActDisk(CSolver **solver_container, CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::Set_MPI_Nearfield(CGeometry *geometry, CConfig *config) { }
 
-inline void CSolver::Set_MPI_Interface(CGeometry *geometry, CConfig *config) { }
-
 inline void CSolver::SetMax_Eigenvalue(CGeometry *geometry, CConfig *config) { }
-
-inline void CSolver::Set_MPI_MaxEigenvalue(CGeometry *geometry, CConfig *config) { }
 
 inline void CSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) { }
 
@@ -1017,20 +978,22 @@ inline void CSolver::Set_Prestretch(CGeometry *geometry, CConfig *config) { }
 inline void CSolver::Set_ElementProperties(CGeometry *geometry, CConfig *config) { }
 
 inline su2double CSolver::Compute_LoadCoefficient(su2double CurrentTime, su2double RampTime, CConfig *config) { return 0.0; }
+
+inline su2double CSolver::Get_ValCoord(CGeometry *geometry, unsigned long indexNode, unsigned short iDim) {return 0.0;}
                       
-inline void CSolver::Compute_StiffMatrix(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_StiffMatrix(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_StiffMatrix_NodalStressRes(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_StiffMatrix_NodalStressRes(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_MassMatrix(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_MassMatrix(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_MassRes(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_MassRes(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_NodalStressRes(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_NodalStressRes(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_NodalStress(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_NodalStress(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
-inline void CSolver::Compute_DeadLoad(CGeometry *geometry, CSolver **solver_container, CNumerics **numerics, CConfig *config) { }
+inline void CSolver::Compute_DeadLoad(CGeometry *geometry, CNumerics **numerics, CConfig *config) { }
 
 inline void CSolver::Initialize_SystemMatrix(CGeometry *geometry, CSolver **solver_container, CConfig *config) { }  
 
@@ -1052,7 +1015,7 @@ inline void CSolver::RegisterObj_Func(CConfig *config){}
 
 inline void CSolver::SetSurface_Sensitivity(CGeometry *geometry, CConfig *config){}
 
-inline void CSolver::SetSensitivity(CGeometry *geometry, CConfig *config){}
+inline void CSolver::SetSensitivity(CGeometry *geometry, CSolver **solver, CConfig *config){}
 
 inline void CSolver::SetAdj_ObjFunc(CGeometry *geometry, CConfig *config){}
 
@@ -1181,9 +1144,19 @@ inline void CSolver::SetRoe_Dissipation(CGeometry *geometry, CConfig *config) {}
 
 inline void CSolver::SetDES_LengthScale(CSolver** solver, CGeometry *geometry, CConfig *config) { }
 
+inline void CSolver::DeformMesh(CGeometry **geometry, CNumerics **numerics, CConfig *config) { }
+
+inline void CSolver::SetMesh_Stiffness(CGeometry **geometry, CNumerics **numerics, CConfig *config) { }
+
 inline void CSolver::SetConjugateHeatVariable(unsigned short val_marker, unsigned long val_vertex, unsigned short pos_var, su2double relaxation_factor, su2double val_var) { }
 
 inline su2double CSolver::GetConjugateHeatVariable(unsigned short val_marker, unsigned long val_vertex, unsigned short pos_var) { return 0.0; }
+
+inline void CSolver::ComputeVerificationError(CGeometry *geometry, CConfig *config) { }
+
+inline void CSolver::SetImplicitPeriodic(bool val_implicit_periodic) { implicit_periodic = val_implicit_periodic; }
+
+inline void CSolver::SetRotatePeriodic(bool val_rotate_periodic) { rotate_periodic = val_rotate_periodic; }
 
 inline su2double CEulerSolver::GetDensity_Inf(void) { return Density_Inf; }
 
@@ -2330,6 +2303,8 @@ inline su2double CFEASolver::GetTotal_OFRefNode(void){ return Total_OFRefNode; }
 
 inline su2double CFEASolver::GetTotal_OFVolFrac(void){ return Total_OFVolFrac; }
 
+inline su2double CFEASolver::GetTotal_OFCompliance(void){ return Total_OFCompliance; }
+
 inline bool CFEASolver::IsElementBased(void){ return element_based; }
 
 inline void CFEASolver::SetForceCoeff(su2double val_forcecoeff_history) { ForceCoeff = val_forcecoeff_history; }
@@ -2343,6 +2318,8 @@ inline su2double CFEASolver::GetForceCoeff(void) { return ForceCoeff; }
 inline su2double CFEASolver::GetRelaxCoeff(void) { return RelaxCoeff; }
 
 inline su2double CFEASolver::GetFSI_Residual(void) { return FSI_Residual; }
+
+inline su2double CFEASolver::Get_ValCoord(CGeometry *geometry, unsigned long indexNode, unsigned short iDim) {return geometry->node[indexNode]->GetCoord(iDim);}
 
 inline void CSolver::SetAdjoint_OutputMesh(CGeometry *geometry, CConfig *config) {}
 
@@ -2525,3 +2502,5 @@ inline unsigned short CDiscAdjFEASolver::GetnDVFEA(void) { return nDV; }
 inline su2double CDiscAdjFEASolver::GetVal_EField(unsigned short iVal) { return EField[iVal]; }
 
 inline su2double CDiscAdjFEASolver::GetVal_DVFEA(unsigned short iVal) { return DV_Val[iVal]; }
+
+inline void CSolver::SetDualTime_Mesh(void){ }

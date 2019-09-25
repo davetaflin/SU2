@@ -47,7 +47,7 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
   unsigned long *LocalIndex = NULL;
   bool *SurfacePoint = NULL;
   
-  bool grid_movement  = config->GetGrid_Movement();
+  bool dynamic_grid = config->GetDynamic_Grid();
   bool adjoint = config->GetContinuous_Adjoint() || config->GetDiscrete_Adjoint();
 
   char cstr[200], buffer[50];
@@ -84,8 +84,10 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
   /*--- Special cases where a number needs to be appended to the file name. ---*/
   
   if ((Kind_Solver == EULER || Kind_Solver == NAVIER_STOKES || Kind_Solver == RANS ||
+       Kind_Solver == INC_EULER || Kind_Solver == INC_NAVIER_STOKES || Kind_Solver == INC_RANS ||
        Kind_Solver == ADJ_EULER || Kind_Solver == ADJ_NAVIER_STOKES || Kind_Solver == ADJ_RANS ||
        Kind_Solver == DISC_ADJ_EULER || Kind_Solver == DISC_ADJ_NAVIER_STOKES || Kind_Solver == DISC_ADJ_RANS ||
+       Kind_Solver == DISC_ADJ_INC_EULER || Kind_Solver == DISC_ADJ_INC_NAVIER_STOKES || Kind_Solver == DISC_ADJ_INC_RANS ||
        Kind_Solver == HEAT_EQUATION_FVM) &&
       (val_nZone > 1) ) {
     SPRINTF (buffer, "_%d", SU2_TYPE::Int(val_iZone));
@@ -152,7 +154,7 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
       }
       
       /*--- Add names for any extra variables (this will need to be adjusted). ---*/
-      if (grid_movement) {
+      if (dynamic_grid) {
         if (nDim == 2) {
           Tecplot_File << ",\"Grid_Velx\",\"Grid_Vely\"";
         } else {
@@ -160,21 +162,24 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
         }
       }
       
-      if ((Kind_Solver == EULER) || (Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)) {
+      if ((Kind_Solver == EULER) || (Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS) ||
+          (Kind_Solver == INC_EULER) || (Kind_Solver == INC_NAVIER_STOKES) || (Kind_Solver == INC_RANS)) {
         Tecplot_File << ",\"Pressure\",\"Temperature\",\"C<sub>p</sub>\",\"Mach\"";
       }
       
-      if (((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS))) {
+      if ((Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS) ||
+          ((Kind_Solver == INC_NAVIER_STOKES) || (Kind_Solver == INC_RANS))) {
         if (nDim == 2) Tecplot_File << ", \"<greek>m</greek>\", \"C<sub>f</sub>_x\", \"C<sub>f</sub>_y\", \"h\", \"y<sup>+</sup>\"";
         else Tecplot_File << ", \"<greek>m</greek>\", \"C<sub>f</sub>_x\", \"C<sub>f</sub>_y\", \"C<sub>f</sub>_z\", \"h\", \"y<sup>+</sup>\"";
       }
       
-      if (Kind_Solver == RANS) {
+      if (Kind_Solver == RANS || Kind_Solver == INC_RANS) {
         Tecplot_File << ", \"<greek>m</greek><sub>t</sub>\"";
       }
       
       if (config->GetWrt_SharpEdges()) {
-        if (((Kind_Solver == EULER) || (Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS)))  {
+        if ((Kind_Solver == EULER) || (Kind_Solver == NAVIER_STOKES) || (Kind_Solver == RANS) ||
+            (Kind_Solver == INC_EULER) || (Kind_Solver == INC_NAVIER_STOKES) || (Kind_Solver == INC_RANS))  {
           Tecplot_File << ", \"Sharp_Edge_Dist\"";
         }
       }
@@ -187,7 +192,10 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
 
       if (( Kind_Solver == DISC_ADJ_EULER              ) ||
           ( Kind_Solver == DISC_ADJ_NAVIER_STOKES      ) ||
-          ( Kind_Solver == DISC_ADJ_RANS               )) {
+          ( Kind_Solver == DISC_ADJ_RANS               ) ||
+          ( Kind_Solver == DISC_ADJ_INC_EULER          ) ||
+          ( Kind_Solver == DISC_ADJ_INC_NAVIER_STOKES  ) ||
+          ( Kind_Solver == DISC_ADJ_INC_RANS           ) ) {
         Tecplot_File << ", \"Surface_Sensitivity\", \"Sensitivity_x\", \"Sensitivity_y\"";
         if (geometry->GetnDim() == 3) {
           Tecplot_File << ",\"Sensitivity_z\"";
@@ -822,8 +830,11 @@ namespace
     
     /*--- Special cases where a number needs to be appended to the file name. ---*/
     if ((Kind_Solver == EULER || Kind_Solver == NAVIER_STOKES || Kind_Solver == RANS ||
+         Kind_Solver == INC_EULER || Kind_Solver == INC_NAVIER_STOKES || Kind_Solver == INC_RANS ||
          Kind_Solver == ADJ_EULER || Kind_Solver == ADJ_NAVIER_STOKES || Kind_Solver == ADJ_RANS ||
-         Kind_Solver == DISC_ADJ_EULER || Kind_Solver == DISC_ADJ_NAVIER_STOKES || Kind_Solver == DISC_ADJ_RANS) &&
+         Kind_Solver == DISC_ADJ_EULER || Kind_Solver == DISC_ADJ_NAVIER_STOKES || Kind_Solver == DISC_ADJ_RANS ||
+         Kind_Solver == DISC_ADJ_INC_EULER || Kind_Solver == DISC_ADJ_INC_NAVIER_STOKES || Kind_Solver == DISC_ADJ_INC_RANS ||
+         Kind_Solver == HEAT_EQUATION_FVM) &&
         (val_nZone > 1) ) {
       string_stream << '_' << val_iZone;
     }
@@ -1347,7 +1358,7 @@ void COutput::WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, 
               }
               else {
                 values_to_write.resize(rank_num_points);
-                for(unsigned long i = 0; i < rank_num_points; ++i)
+                for(unsigned long i = 0; i < (unsigned long)rank_num_points; ++i)
                   values_to_write[i] = SU2_TYPE::GetValue(Parallel_Data[iVar][i]);
                 err = tecZoneVarWriteDoubleValues(file_handle, zone, iVar + 1, 0, rank_num_points, &values_to_write[0]);
               }
@@ -1387,14 +1398,22 @@ void COutput::WriteTecplotBinary_Parallel(CConfig *config, CGeometry *geometry, 
 
   unsigned short iVar;
 
+  vector<passivedouble> var_data;
+  size_t var_data_size = nVar_Par * (surf_sol ? nSurf_Poin_Par : nParallel_Poin);
+  var_data.reserve(var_data_size);
+  
   if (surf_sol) {
     for (iVar = 0; err == 0 && iVar < nVar_Par; iVar++) {
-      err = tecZoneVarWriteDoubleValues(file_handle, zone, iVar + 1, 0, nSurf_Poin_Par, Parallel_Surf_Data[iVar]);
+      for(unsigned long i = 0; i < nSurf_Poin_Par; ++i)
+        var_data.push_back(SU2_TYPE::GetValue(Parallel_Surf_Data[iVar][i]));
+      err = tecZoneVarWriteDoubleValues(file_handle, zone, iVar + 1, 0, nSurf_Poin_Par, &var_data[iVar * nSurf_Poin_Par]);
       if (err) cout << rank << ": Error outputting Tecplot variable value." << endl;
     }
   } else {
     for (iVar = 0; err == 0 && iVar < nVar_Par; iVar++) {
-      err = tecZoneVarWriteDoubleValues(file_handle, zone, iVar + 1, 0, nParallel_Poin, Parallel_Data[iVar]);
+      for(unsigned long i = 0; i < nParallel_Poin; ++i)
+        var_data.push_back(SU2_TYPE::GetValue(Parallel_Data[iVar][i]));
+      err = tecZoneVarWriteDoubleValues(file_handle, zone, iVar + 1, 0, nParallel_Poin, &var_data[iVar * nParallel_Poin]);
       if (err) cout << rank << ": Error outputting Tecplot variable value." << endl;
     }
   }
@@ -2157,7 +2176,7 @@ void COutput::SetTecplotBinary_DomainSolution(CConfig *config, CGeometry *geomet
   INTEGER4 *ShareFromZone = NULL, IsBlock, NumFaceConnections, FaceNeighborMode, ShareConnectivityFromZone;
   string buffer, variables;
   stringstream file;
-  bool first_zone = true, unsteady = config->GetUnsteady_Simulation(), GridMovement = config->GetGrid_Movement();
+  bool first_zone = true, unsteady = config->GetUnsteady_Simulation(), GridMovement = config->GetDynamic_Grid();
   bool Wrt_Unsteady = config->GetWrt_Unsteady();
   unsigned long iExtIter = config->GetExtIter();
   unsigned short NVar, dims = geometry->GetnDim();
@@ -3068,7 +3087,7 @@ void COutput::SetTecplotBinary_SurfaceSolution(CConfig *config, CGeometry *geome
   INTEGER4 *ShareFromZone, IsBlock, NumFaceConnections, FaceNeighborMode, ShareConnectivityFromZone;
   string buffer, variables;
   stringstream file;
-  bool first_zone = true, unsteady = config->GetUnsteady_Simulation(), GridMovement = config->GetGrid_Movement();
+  bool first_zone = true, unsteady = config->GetUnsteady_Simulation(), GridMovement = config->GetDynamic_Grid();
   bool Wrt_Unsteady = config->GetWrt_Unsteady();
   unsigned long iPoint, iElem, iNode, iSurf_Poin, iExtIter = config->GetExtIter();
   unsigned short iDim, NVar, dims = geometry->GetnDim();
@@ -3432,7 +3451,7 @@ string COutput::AssembleVariableNames(CGeometry *geometry, CConfig *config, unsi
   *NVar = 0;
   unsigned short nDim = geometry->GetnDim();
   unsigned short Kind_Solver  = config->GetKind_Solver();
-  bool grid_movement = config->GetGrid_Movement();
+  bool dynamic_grid = config->GetDynamic_Grid();
   bool Wrt_Unsteady = config->GetWrt_Unsteady();
   
   
@@ -3450,7 +3469,7 @@ string COutput::AssembleVariableNames(CGeometry *geometry, CConfig *config, unsi
      the PointID as well as each coordinate (x, y, z). ---*/
     string varname;
     
-    if (Wrt_Unsteady && grid_movement) {
+    if (Wrt_Unsteady && dynamic_grid) {
       
       *NVar = config->fields.size()-1;
       for (unsigned short iField = 1; iField < config->fields.size(); iField++) {
@@ -3472,7 +3491,7 @@ string COutput::AssembleVariableNames(CGeometry *geometry, CConfig *config, unsi
     
   } else {
     
-    if (Wrt_Unsteady && grid_movement) {
+    if (Wrt_Unsteady && dynamic_grid) {
       if (nDim == 2) {
         variables << "x y "; *NVar += 2;
       } else {
@@ -3495,7 +3514,7 @@ string COutput::AssembleVariableNames(CGeometry *geometry, CConfig *config, unsi
     }
     
     /*--- Add names for any extra variables (this will need to be adjusted). ---*/
-    if (grid_movement) {
+    if (dynamic_grid) {
       if (nDim == 2) {
         variables << "Grid_Velx Grid_Vely "; *NVar += 2;
       } else {

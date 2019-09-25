@@ -327,6 +327,10 @@ inline long CConfig::GetUnst_RestartIter(void) { return Unst_RestartIter; }
 
 inline long CConfig::GetUnst_AdjointIter(void) { return Unst_AdjointIter; }
 
+inline void CConfig::SetPhysicalTime(su2double val_t) { PhysicalTime = val_t; }
+
+inline su2double CConfig::GetPhysicalTime(void) { return PhysicalTime; }
+
 inline bool CConfig::GetReorientElements(void) { return ReorientElements; }
 
 inline unsigned long CConfig::GetIter_Avg_Objective(void) { return Iter_Avg_Objective ; }
@@ -933,71 +937,59 @@ inline void CConfig::SetMu_PolyCoeffND(su2double val_coeff, unsigned short val_i
 
 inline void CConfig::SetKt_PolyCoeffND(su2double val_coeff, unsigned short val_index) { KtPolyCoefficientsND[val_index] = val_coeff; }
 
-inline unsigned short CConfig::GetKind_GridMovement(unsigned short val_iZone) { return Kind_GridMovement[val_iZone]; }
+inline unsigned short CConfig::GetKind_GridMovement() { return Kind_GridMovement; }
 
-inline unsigned short CConfig::GetKind_GridMovement(void) { return Kind_GridMovement[0]; }
+inline void CConfig::SetKind_GridMovement(unsigned short motion_Type) { Kind_GridMovement = motion_Type; }
 
-inline void CConfig::SetKind_GridMovement(unsigned short val_iZone, unsigned short motion_Type) { Kind_GridMovement[val_iZone] = motion_Type; }
+inline su2double CConfig::GetMotion_Origin(unsigned short iDim){return Motion_Origin[iDim];}
+
+inline su2double CConfig::GetMarkerMotion_Origin(unsigned short iMarkerMoving, unsigned short iDim){return MarkerMotion_Origin[3*iMarkerMoving + iDim];}
+
+inline void CConfig::SetMarkerMotion_Origin(su2double* val, unsigned short iMarkerMoving){
+  for (unsigned short iDim = 0; iDim < 3; iDim++){
+    MarkerMotion_Origin[3*iMarkerMoving + iDim] = val[iDim];
+  }
+}
+
+inline void CConfig::SetMotion_Origin(su2double* val){
+  for (unsigned short iDim = 0; iDim < 3; iDim++){
+    Motion_Origin[iDim] = val[iDim];
+  }
+}
+
+inline su2double CConfig::GetTranslation_Rate(unsigned short iDim){return Translation_Rate[iDim];}
+
+inline su2double CConfig::GetMarkerTranslationRate(unsigned short iMarkerMoving, unsigned short iDim){return MarkerTranslation_Rate[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetRotation_Rate(unsigned short iDim){return Rotation_Rate[iDim];}
+
+inline void CConfig::SetRotation_Rate(unsigned short iDim, su2double val){Rotation_Rate[iDim] = val;}
+
+inline su2double CConfig::GetFinalRotation_Rate_Z(){return FinalRotation_Rate_Z;}
+
+inline su2double CConfig::GetMarkerRotationRate(unsigned short iMarkerMoving, unsigned short iDim){return MarkerRotation_Rate[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetPitching_Omega(unsigned short iDim){return Pitching_Omega[iDim];}
+
+inline su2double CConfig::GetMarkerPitching_Omega(unsigned short iMarkerMoving, unsigned short iDim){return MarkerPitching_Omega[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetPitching_Ampl(unsigned short iDim){return Pitching_Ampl[iDim];}
+
+inline su2double CConfig::GetMarkerPitching_Ampl(unsigned short iMarkerMoving, unsigned short iDim){return MarkerPitching_Ampl[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetPitching_Phase(unsigned short iDim){return Pitching_Phase[iDim];}
+
+inline su2double CConfig::GetMarkerPitching_Phase(unsigned short iMarkerMoving, unsigned short iDim){return MarkerPitching_Phase[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetPlunging_Omega(unsigned short iDim){return Plunging_Omega[iDim];}
+
+inline su2double CConfig::GetMarkerPlunging_Omega(unsigned short iMarkerMoving, unsigned short iDim){return MarkerPlunging_Omega[3*iMarkerMoving + iDim];}
+
+inline su2double CConfig::GetPlunging_Ampl(unsigned short iDim){return Plunging_Ampl[iDim];}
+
+inline su2double CConfig::GetMarkerPlunging_Ampl(unsigned short iMarkerMoving, unsigned short iDim){return MarkerPlunging_Ampl[3*iMarkerMoving + iDim];}
 
 inline su2double CConfig::GetMach_Motion(void) { return Mach_Motion; }
-
-inline su2double CConfig::GetMotion_Origin_X(unsigned short val_iZone) { return Motion_Origin_X[val_iZone]; }
-
-inline su2double CConfig::GetMotion_Origin_Y(unsigned short val_iZone) { return Motion_Origin_Y[val_iZone]; }
-
-inline su2double CConfig::GetMotion_Origin_Z(unsigned short val_iZone) { return Motion_Origin_Z[val_iZone]; }
-
-inline void CConfig::SetMotion_Origin_X(unsigned short val_iZone, su2double val_origin) { Motion_Origin_X[val_iZone] = val_origin; }
-
-inline void CConfig::SetMotion_Origin_Y(unsigned short val_iZone, su2double val_origin) { Motion_Origin_Y[val_iZone] = val_origin; }
-
-inline void CConfig::SetMotion_Origin_Z(unsigned short val_iZone, su2double val_origin) { Motion_Origin_Z[val_iZone] = val_origin; }
-
-inline su2double CConfig::GetTranslation_Rate_X(unsigned short val_iZone) { return  Translation_Rate_X[val_iZone]; }
-
-inline su2double CConfig::GetTranslation_Rate_Y(unsigned short val_iZone) { return  Translation_Rate_Y[val_iZone]; }
-
-inline su2double CConfig::GetTranslation_Rate_Z(unsigned short val_iZone) { return  Translation_Rate_Z[val_iZone]; }
-
-inline su2double CConfig::GetRotation_Rate_X(unsigned short val_iZone) { return  Rotation_Rate_X[val_iZone]; }
-
-inline su2double CConfig::GetRotation_Rate_Y(unsigned short val_iZone) { return  Rotation_Rate_Y[val_iZone]; }
-
-inline su2double CConfig::GetRotation_Rate_Z(unsigned short val_iZone) { return  Rotation_Rate_Z[val_iZone]; }
-
-inline su2double CConfig::GetFinalRotation_Rate_Z(unsigned short val_iZone) { return  FinalRotation_Rate_Z[val_iZone]; }
-
-inline void CConfig::SetRotation_Rate_Z(su2double newRotation_Rate_Z, unsigned short val_iZone) { Rotation_Rate_Z[val_iZone] = newRotation_Rate_Z; }
-
-inline su2double CConfig::GetPitching_Omega_X(unsigned short val_iZone) { return  Pitching_Omega_X[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Omega_Y(unsigned short val_iZone) { return  Pitching_Omega_Y[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Omega_Z(unsigned short val_iZone) { return  Pitching_Omega_Z[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Ampl_X(unsigned short val_iZone) { return  Pitching_Ampl_X[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Ampl_Y(unsigned short val_iZone) { return  Pitching_Ampl_Y[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Ampl_Z(unsigned short val_iZone) { return  Pitching_Ampl_Z[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Phase_X(unsigned short val_iZone) { return  Pitching_Phase_X[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Phase_Y(unsigned short val_iZone) { return  Pitching_Phase_Y[val_iZone]; }
-
-inline su2double CConfig::GetPitching_Phase_Z(unsigned short val_iZone) { return  Pitching_Phase_Z[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Omega_X(unsigned short val_iZone) { return  Plunging_Omega_X[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Omega_Y(unsigned short val_iZone) { return  Plunging_Omega_Y[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Omega_Z(unsigned short val_iZone) { return  Plunging_Omega_Z[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Ampl_X(unsigned short val_iZone) { return  Plunging_Ampl_X[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Ampl_Y(unsigned short val_iZone) { return  Plunging_Ampl_Y[val_iZone]; }
-
-inline su2double CConfig::GetPlunging_Ampl_Z(unsigned short val_iZone) { return  Plunging_Ampl_Z[val_iZone]; }
 
 inline su2double* CConfig::GetOmega_HB(void) { return  Omega_HB; }
 
@@ -1030,6 +1022,8 @@ inline unsigned long CConfig::GetDeform_Linear_Solver_Iter(void) { return Deform
 inline unsigned short CConfig::GetLinear_Solver_ILU_n(void) { return Linear_Solver_ILU_n; }
 
 inline unsigned long CConfig::GetLinear_Solver_Restart_Frequency(void) { return Linear_Solver_Restart_Frequency; }
+
+inline su2double CConfig::GetLinear_Solver_Smoother_Relaxation(void) const { return Linear_Solver_Smoother_Relaxation; }
 
 inline su2double CConfig::GetRelaxation_Factor_Flow(void) { return Relaxation_Factor_Flow; }
 
@@ -1066,6 +1060,8 @@ inline su2double CConfig::GetCFLRedCoeff_AdjTurb(void) { return CFLRedCoeff_AdjT
 inline unsigned long CConfig::GetGridDef_Linear_Iter(void) { return GridDef_Linear_Iter; }
 
 inline unsigned long CConfig::GetGridDef_Nonlinear_Iter(void) { return GridDef_Nonlinear_Iter; }
+
+inline bool CConfig::GetDeform_Mesh(void) { return Deform_Mesh; }
 
 inline bool CConfig::GetDeform_Output(void) { return Deform_Output; }
 
@@ -1249,8 +1245,6 @@ inline bool CConfig::GetBoolMixingPlaneInterface(void) { return (nMarker_MixingP
 
 inline bool CConfig::GetBoolTurbomachinery(void) { return (nMarker_Turbomachinery !=0);}
 
-inline bool CConfig::GetBoolZoneSpecific(void) { return ZoneSpecific_Problem;}
-
 inline bool CConfig::GetBoolTurbMixingPlane(void) { return turbMixingPlane;}
 
 inline bool CConfig::GetSpatialFourier(void){return SpatialFourier;}
@@ -1349,6 +1343,10 @@ inline string CConfig::GetMarker_HeatFlux_TagBound(unsigned short val_marker) { 
 
 inline string CConfig::GetMarker_Moving_TagBound(unsigned short val_marker) { return Marker_Moving[val_marker]; }
 
+inline string CConfig::GetMarker_Deform_Mesh_TagBound(unsigned short val_marker) { return Marker_Deform_Mesh[val_marker]; }
+
+inline string CConfig::GetMarker_Fluid_Load_TagBound(unsigned short val_marker) { return Marker_Fluid_Load[val_marker]; }
+
 inline string CConfig::GetMarker_PyCustom_TagBound(unsigned short val_marker){ return Marker_PyCustom[val_marker]; }
 
 inline string CConfig::GetMarker_Analyze_TagBound(unsigned short val_marker) { return Marker_Analyze[val_marker]; }
@@ -1388,6 +1386,10 @@ inline void CConfig::SetMarker_All_DV(unsigned short val_marker, unsigned short 
 
 inline void CConfig::SetMarker_All_Moving(unsigned short val_marker, unsigned short val_moving) { Marker_All_Moving[val_marker] = val_moving; }
 
+inline void CConfig::SetMarker_All_Deform_Mesh(unsigned short val_marker, unsigned short val_interface) { Marker_All_Deform_Mesh[val_marker] = val_interface; }
+
+inline void CConfig::SetMarker_All_Fluid_Load(unsigned short val_marker, unsigned short val_interface) { Marker_All_Fluid_Load[val_marker] = val_interface; }
+
 inline void CConfig::SetMarker_All_PyCustom(unsigned short val_marker, unsigned short val_PyCustom) { Marker_All_PyCustom[val_marker] = val_PyCustom; }
 
 inline void CConfig::SetMarker_All_PerBound(unsigned short val_marker, short val_perbound) { Marker_All_PerBound[val_marker] = val_perbound; }
@@ -1422,6 +1424,10 @@ inline unsigned short CConfig::GetMarker_All_DV(unsigned short val_marker) { ret
 
 inline unsigned short CConfig::GetMarker_All_Moving(unsigned short val_marker) { return Marker_All_Moving[val_marker]; }
 
+inline unsigned short CConfig::GetMarker_All_Deform_Mesh(unsigned short val_marker) { return Marker_All_Deform_Mesh[val_marker]; }
+
+inline unsigned short CConfig::GetMarker_All_Fluid_Load(unsigned short val_marker) { return Marker_All_Fluid_Load[val_marker]; }
+
 inline unsigned short CConfig::GetMarker_All_PyCustom(unsigned short val_marker) { return Marker_All_PyCustom[val_marker];}
 
 inline unsigned short CConfig::GetnMarker_All(void) { return nMarker_All; }
@@ -1432,7 +1438,9 @@ inline unsigned short CConfig::GetnMarker_EngineInflow(void) {	return nMarker_En
 
 inline unsigned short CConfig::GetnMarker_EngineExhaust(void) { return nMarker_EngineExhaust; }
 
-inline unsigned short CConfig::GetnMarker_InterfaceBound(void) { return nMarker_InterfaceBound; }
+inline unsigned short CConfig::GetnMarker_Deform_Mesh(void) { return nMarker_Deform_Mesh; }
+
+inline unsigned short CConfig::GetnMarker_Fluid_Load(void) { return nMarker_Fluid_Load; }
 
 inline unsigned short CConfig::GetnMarker_Fluid_InterfaceBound(void) { return nMarker_Fluid_InterfaceBound; }
 
@@ -1608,7 +1616,15 @@ inline su2double CConfig::GetFixAzimuthalLine(void) { return FixAzimuthalLine; }
 
 inline su2double CConfig::GetCFLRedCoeff_Turb(void) { return CFLRedCoeff_Turb; }
 
-inline bool CConfig::GetGrid_Movement(void) { return Grid_Movement; }
+inline bool CConfig::GetGrid_Movement(void) { return (Kind_GridMovement != NO_MOVEMENT) || ((nKind_SurfaceMovement > 0) && !GetSurface_Movement(FLUID_STRUCTURE_STATIC)); }
+
+inline bool CConfig::GetDynamic_Grid(void) {
+  return (Kind_GridMovement != NO_MOVEMENT)
+      || ((nKind_SurfaceMovement > 0) && !GetSurface_Movement(FLUID_STRUCTURE_STATIC))
+      || (Deform_Mesh && (Unsteady_Simulation != NO));
+}
+
+inline unsigned short CConfig::GetKind_SurfaceMovement(unsigned short iMarkerMoving){return Kind_SurfaceMovement[iMarkerMoving];}
 
 inline bool CConfig::GetRotating_Frame(void) { return Rotating_Frame; }
 
@@ -1652,26 +1668,6 @@ inline bool CConfig::GetWrite_Conv_FSI(void) { return Write_Conv_FSI; }
 
 inline bool CConfig::GetHold_GridFixed(void) { return Hold_GridFixed; }
 
-inline unsigned short CConfig::GetnPeriodicIndex(void) { return nPeriodic_Index; }
-
-inline su2double* CConfig::GetPeriodicCenter(unsigned short val_index) { return Periodic_Center[val_index]; }
-
-inline void CConfig::SetPeriodicCenter(unsigned short val_index, su2double* center) {
-  for (unsigned short i = 0; i < 3; i++) Periodic_Center[val_index][i] = center[i];
-}
-
-inline su2double* CConfig::GetPeriodicRotation(unsigned short val_index) { return Periodic_Rotation[val_index]; }
-
-inline void CConfig::SetPeriodicRotation(unsigned short val_index, su2double* rotation) {
-    for (unsigned short i = 0; i < 3; i++) Periodic_Rotation[val_index][i] = rotation[i];
-}
-
-inline su2double* CConfig::GetPeriodicTranslate(unsigned short val_index) { return Periodic_Translate[val_index]; }
-
-inline void CConfig::SetPeriodicTranslate(unsigned short val_index, su2double* translate) {
-  for (unsigned short i = 0; i < 3; i++) Periodic_Translate[val_index][i] = translate[i];
-}
-
 inline su2double CConfig::GetCyclic_Pitch(void) { return Cyclic_Pitch; }
 
 inline su2double CConfig::GetCollective_Pitch(void) { return Collective_Pitch; }
@@ -1705,6 +1701,8 @@ inline bool CConfig::GetWrt_SharpEdges(void) { return Wrt_SharpEdges; }
 inline bool CConfig::GetWrt_Halo(void) { return Wrt_Halo; }
 
 inline bool CConfig::GetWrt_Performance(void) { return Wrt_Performance; }
+
+inline bool CConfig::GetWrt_MeshQuality(void) { return Wrt_MeshQuality; }
 
 inline bool CConfig::GetWrt_InletFile(void) { return Wrt_InletFile; }
 
@@ -2010,9 +2008,13 @@ inline bool CConfig::GetQCR(void) {return QCR;}
 
 inline bool CConfig::GetCompute_Average(void) {return Compute_Average;}
 
+inline unsigned short CConfig::GetVerification_Solution(void) {return Kind_Verification_Solution;}
+
 inline ofstream* CConfig::GetHistFile(void) { return ConvHistFile; }
 
 inline void CConfig::SetHistFile(ofstream *HistFile) { ConvHistFile = HistFile; }
+
+inline unsigned short CConfig::GetComm_Level(void) { return Comm_Level; }
 
 inline bool CConfig::GetTopology_Optimization(void) const { return topology_optimization; }
 
@@ -2030,6 +2032,8 @@ inline void CConfig::GetTopology_Optim_Kernel(const unsigned short iKernel, unsi
   param = top_optim_kernel_params[iKernel];
   radius = top_optim_filter_radius[iKernel];
 }
+
+inline unsigned short CConfig::GetTopology_Search_Limit(void) const { return top_optim_search_lim; }
 
 inline void CConfig::GetTopology_Optim_Projection(unsigned short &type, su2double &param) const {
   type = top_optim_proj_type;  param = top_optim_proj_param;
@@ -2078,3 +2082,15 @@ inline unsigned short CConfig::GetEig_Val_Comp(void) {return eig_val_comp; }
 inline su2double CConfig::GetUQ_URLX(void) {return uq_urlx; }
 
 inline bool CConfig::GetUQ_Permute(void) { return uq_permute; }
+
+inline unsigned long CConfig::GetPastixFactFreq(void) { return pastix_fact_freq; }
+
+inline unsigned short CConfig::GetPastixVerbLvl(void) { return pastix_verb_lvl; }
+
+inline unsigned short CConfig::GetPastixFillLvl(void) { return pastix_fill_lvl; }
+
+inline short CConfig::GetMeshBoxSize(unsigned short val_iDim) { return Mesh_Box_Size[val_iDim]; }
+
+inline su2double CConfig::GetMeshBoxLength(unsigned short val_iDim) { return Mesh_Box_Length[val_iDim]; }
+
+inline su2double CConfig::GetMeshBoxOffset(unsigned short val_iDim) { return Mesh_Box_Offset[val_iDim]; }

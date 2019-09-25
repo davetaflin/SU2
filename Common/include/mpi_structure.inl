@@ -34,7 +34,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with SU2. If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "mpi_structure.hpp"
 #pragma once
 
 #ifdef HAVE_MPI
@@ -286,6 +286,11 @@ inline void CMediMPIWrapper::Init(int *argc, char ***argv) {
   MPI_Win_create(&MinRankError, sizeof(int), sizeof(int), MPI_INFO_NULL,
                  currentComm, &winMinRankError);
   winMinRankErrorInUse = true;
+}
+
+inline void CMediMPIWrapper::Init_AMPI(void) {
+  AMPI_Init_common();
+  MediTool::init();
 }
 
 inline void CMediMPIWrapper::SetComm(Comm newComm){

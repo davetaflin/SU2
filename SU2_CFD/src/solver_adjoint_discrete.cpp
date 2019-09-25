@@ -36,6 +36,7 @@
  */
 
 #include "../include/solver_structure.hpp"
+#include "../include/variables/CDiscAdjVariable.hpp"
 
 CDiscAdjSolver::CDiscAdjSolver(void) : CSolver () {
 
@@ -530,7 +531,7 @@ void CDiscAdjSolver::ExtractAdjoint_Solution(CGeometry *geometry, CConfig *confi
 }
 
 void CDiscAdjSolver::ExtractAdjoint_Variables(CGeometry *geometry, CConfig *config) {
-
+  
   /*--- Extract the adjoint values of the farfield values ---*/
 
   if ((config->GetKind_Regime() == COMPRESSIBLE) && (KindDirect_Solver == RUNTIME_FLOW_SYS) && !config->GetBoolTurbomachinery()) {
@@ -685,8 +686,6 @@ void CDiscAdjSolver::ExtractAdjoint_CrossTerm(CGeometry *geometry, CConfig *conf
 
   }
 
-//  Set_MPI_CrossTerm(geometry, config);
-
 }
 
 void CDiscAdjSolver::ExtractAdjoint_CrossTerm_Geometry(CGeometry *geometry, CConfig *config) {
@@ -789,7 +788,7 @@ void CDiscAdjSolver::SetAdjoint_OutputMesh(CGeometry *geometry, CConfig *config)
 
 }
 
-void CDiscAdjSolver::SetSensitivity(CGeometry *geometry, CConfig *config) {
+void CDiscAdjSolver::SetSensitivity(CGeometry *geometry, CSolver **solver, CConfig *config) {
 
   unsigned long iPoint;
   unsigned short iDim;
@@ -935,10 +934,10 @@ void CDiscAdjSolver::LoadRestart(CGeometry **geometry, CSolver ***solver, CConfi
   su2double Area_Children, Area_Parent, *Solution_Fine;
   ifstream restart_file;
   string restart_filename, filename, text_line;
-
+  
   bool compressible = (config->GetKind_Regime() == COMPRESSIBLE);
   bool incompressible = (config->GetKind_Regime() == INCOMPRESSIBLE);
-
+  
   /*--- Restart the solution from file information ---*/
 
   filename = config->GetSolution_AdjFileName();
