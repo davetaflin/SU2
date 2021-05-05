@@ -2,18 +2,14 @@
  * \file graph_coloring_structure.cpp
  * \brief Functions used to carry out the coloring of a given graph.
  * \author E. van der Weide
- * \version 6.2.0 "Falcon"
+ * \version 7.1.1 "Blackbird"
  *
- * SU2 Lead Developers: Dr. Francisco Palacios (Francisco.D.Palacios@boeing.com).
- *                      Dr. Thomas D. Economon (economon@stanford.edu).
+ * SU2 Project Website: https://su2code.github.io
  *
- * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
- *                 Prof. Piero Colonna's group at Delft University of Technology.
- *                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
- *                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
- *                 Prof. Rafael Palacios' group at Imperial College London.
+ * The SU2 Project is maintained by the SU2 Foundation 
+ * (http://su2foundation.org)
  *
- * Copyright (C) 2012-2016 SU2, the open-source CFD code.
+ * Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,8 +46,8 @@ void CGraphColoringStructure::GraphVertexColoring(
   int myRank = 0;
 
 #ifdef HAVE_MPI
-  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &myRank);
-  SU2_MPI::Comm_size(MPI_COMM_WORLD, &nRank);
+  SU2_MPI::Comm_rank(SU2_MPI::GetComm(), &myRank);
+  SU2_MPI::Comm_size(SU2_MPI::GetComm(), &nRank);
 #endif
 
   /*--- Determine the algorithm to use for the graph coloring. ---*/
@@ -85,7 +81,7 @@ void CGraphColoringStructure::GraphVertexColoring(
 
           /* Determine the size of the message to be received. */
           SU2_MPI::Status status;
-          SU2_MPI::Probe(rank, rank, MPI_COMM_WORLD, &status);
+          SU2_MPI::Probe(rank, rank, SU2_MPI::GetComm(), &status);
 
           int sizeMess;
           SU2_MPI::Get_count(&status, MPI_UNSIGNED_LONG, &sizeMess);
@@ -93,7 +89,7 @@ void CGraphColoringStructure::GraphVertexColoring(
           /* Allocate the memory for the receive buffer and receive the message. */
           vector<unsigned long> recvBuf(sizeMess);
           SU2_MPI::Recv(recvBuf.data(), sizeMess, MPI_UNSIGNED_LONG, rank, rank,
-                        MPI_COMM_WORLD, &status);
+                        SU2_MPI::GetComm(), &status);
 
           /* Store the data just received in the global vector for the graph. */
           unsigned long ii = 0;
@@ -199,7 +195,7 @@ void CGraphColoringStructure::GraphVertexColoring(
         for(int rank=1; rank<nRank; ++rank) {
           int *sendBuf = colorVertices.data() + nVerticesPerRank[rank];
           unsigned long sizeMess = nVerticesPerRank[rank+1] - nVerticesPerRank[rank];
-          SU2_MPI::Send(sendBuf, sizeMess, MPI_INT, rank, rank+1, MPI_COMM_WORLD);
+          SU2_MPI::Send(sendBuf, sizeMess, MPI_INT, rank, rank+1, SU2_MPI::GetComm());
         }
 #endif
       }
@@ -217,7 +213,7 @@ void CGraphColoringStructure::GraphVertexColoring(
         /* Send the data to the master node. A blocking send can be used,
            because there is no danger of deadlock here. */
         SU2_MPI::Send(sendBuf.data(), sendBuf.size(), MPI_UNSIGNED_LONG, 0,
-                      myRank, MPI_COMM_WORLD);
+                      myRank, SU2_MPI::GetComm());
 
         /* Receive the data for the colors of my locally owned DOFs. */
         unsigned long nLocalVert = entriesVertices.size();
@@ -225,7 +221,7 @@ void CGraphColoringStructure::GraphVertexColoring(
 
         SU2_MPI::Status status;
         SU2_MPI::Recv(colorLocalVertices.data(), nLocalVert, MPI_INT, 0, myRank+1,
-                      MPI_COMM_WORLD, &status);
+                      SU2_MPI::GetComm(), &status);
       }
 #endif
       break;
@@ -255,7 +251,7 @@ void CGraphColoringStructure::GraphVertexColoring(
 
 #ifdef HAVE_MPI
   SU2_MPI::Allreduce(&nLocalColors, &nGlobalColors, 1, MPI_INT,
-                     MPI_MAX, MPI_COMM_WORLD);
+                     MPI_MAX, SU2_MPI::GetComm());
 #else
   nGlobalColors = nLocalColors;
 #endif

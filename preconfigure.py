@@ -3,20 +3,20 @@
 ## \file configure.py
 #  \brief An extended configuration script.
 #  \author T. Albring
-#  \version 6.2.0 "Falcon"
+#  \version 7.1.1 "Blackbird"
 #
-# The current SU2 release has been coordinated by the
-# SU2 International Developers Society <www.su2devsociety.org>
-# with selected contributions from the open-source community.
+# SU2 Project Website: https://su2code.github.io
+# 
+# The SU2 Project is maintained by the SU2 Foundation 
+# (http://su2foundation.org)
 #
-# Copyright 2012-2019, Francisco D. Palacios, Thomas D. Economon,
-#                      Tim Albring, and the SU2 contributors.
+# Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
 #
 # SU2 is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-#
+# 
 # SU2 is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -137,8 +137,7 @@ def prepare_source(replace = False, remove = False, revert = False):
                  "SU2_DEF",
                  "SU2_DOT",
                  "SU2_GEO",
-                 "SU2_SOL",
-                 "SU2_MSH"]
+                 "SU2_SOL"]
 
     file_list = ""
 
@@ -169,12 +168,10 @@ def prepare_source(replace = False, remove = False, revert = False):
 
 
     # Hardcoded files that will be skipped
-    exclude_dic_files = { 'Common/include/datatype_structure.hpp' : [-1],
-                          'Common/include/datatype_structure.inl' : [-1],
-                          'Common/include/mpi_structure.hpp' : [-1],
-                          'Common/include/mpi_structure.inl' : [-1],
-                          'Common/src/datatype_structure.cpp': [-1],
-                          'Common/src/mpi_structure.cpp' : [-1] }
+    exclude_dic_files = { 'Common/include/basic_types/datatype_structure.hpp' : [-1],
+                          'Common/include/parallelization/mpi_structure.hpp' : [-1],
+                          'Common/src/basic_types/datatype_structure.cpp': [-1],
+                          'Common/include/parallelization/mpi_structure.cpp' : [-1] }
 
     str_double = 'double'
 
@@ -290,9 +287,9 @@ def init_codi(argument_dict, modes, mpi_support = False, update = False):
     
     # This information of the modules is used if projects was not cloned using git
     # The sha tag must be maintained manually to point to the correct commit
-    sha_version_codi = 'bd4a639c2fe625a80946c8365bd2976a2868cf46'
+    sha_version_codi = '1b8d3f5f03de560fb63a2a76ad91ab7bb3fa67d8'
     github_repo_codi = 'https://github.com/scicompkl/CoDiPack'
-    sha_version_medi = '46a97e1d6e8fdd3cb42b06534cff6acad2a49693'
+    sha_version_medi = '6aef76912e7099c4f08c9705848797ca9e8070da'
     github_repo_medi = 'https://github.com/SciCompKL/MeDiPack'
 
     medi_name = 'MeDiPack'
@@ -480,7 +477,6 @@ def configure(argument_dict,
         print('\tSU2_CFD            -> General solver for direct, cont. adjoint and linearized equations.\n' \
               '\tSU2_DOT            -> Gradient Projection Code.\n' \
               '\tSU2_DEF            -> Mesh Deformation Code.\n'  \
-              '\tSU2_MSH            -> Mesh Adaption Code.\n' \
               '\tSU2_SOL            -> Solution Export Code.\n' \
               '\tSU2_GEO            -> Geometry Definition Code.\n')
     if modes['SU2_AD']:
@@ -557,7 +553,7 @@ def header():
 
     print('-------------------------------------------------------------------------\n'\
           '|    ___ _   _ ___                                                      | \n'\
-          '|   / __| | | |_  )   Release 6.2.0 \'Falcon\'                            | \n'\
+          '|   / __| | | |_  )   Release 7.0.2 \'Blackbird\'                         | \n'\
           '|   \__ \ |_| |/ /                                                      | \n'\
           '|   |___/\___//___|   Pre-configuration Script                          | \n'\
           '|                                                                       | \n'\
@@ -576,7 +572,7 @@ def header():
           '| - Prof. Edwin van der Weide\'s group at the University of Twente.      | \n'\
           '| - Lab. of New Concepts in Aeronautics at Tech. Inst. of Aeronautics.  | \n'\
           '------------------------------------------------------------------------- \n'\
-          '| Copyright 2012-2019, Francisco D. Palacios, Thomas D. Economon,       | \n'\
+          '| Copyright 2012-2020, Francisco D. Palacios, Thomas D. Economon,       | \n'\
           '|                      Tim Albring, and the SU2 contributors.           | \n'\
           '|                                                                       | \n'\
           '| SU2 is free software; you can redistribute it and/or                  | \n'\

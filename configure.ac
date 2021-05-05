@@ -3,30 +3,20 @@
 # \file configure.ac
 # \brief Main file for configuring the autoconf/automake build process
 # \author M. Colonno, T. Economon, F. Palacios, B. Kirk
-# \version 6.2.0 "Falcon"
+# \version 7.1.1 "Blackbird"
 #
-# The current SU2 release has been coordinated by the
-# SU2 International Developers Society <www.su2devsociety.org>
-# with selected contributions from the open-source community.
+# SU2 Project Website: https://su2code.github.io
+# 
+# The SU2 Project is maintained by the SU2 Foundation 
+# (http://su2foundation.org)
 #
-# The main research teams contributing to the current release are:
-#  - Prof. Juan J. Alonso's group at Stanford University.
-#  - Prof. Piero Colonna's group at Delft University of Technology.
-#  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
-#  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
-#  - Prof. Rafael Palacios' group at Imperial College London.
-#  - Prof. Vincent Terrapon's group at the University of Liege.
-#  - Prof. Edwin van der Weide's group at the University of Twente.
-#  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
-#
-# Copyright 2012-2019, Francisco D. Palacios, Thomas D. Economon,
-#                      Tim Albring, and the SU2 contributors.
+# Copyright 2012-2020, SU2 Contributors (cf. AUTHORS.md)
 #
 # SU2 is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-#
+# 
 # SU2 is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -76,7 +66,7 @@ AS_IF([test -z "$PYTHON_INCLUDE"], [
   ])
   AC_MSG_CHECKING([python include flags])
   PYTHON_INCLUDE=`$PYTHON_CONFIG --includes`
-  PYTHON_LIB=`$PYTHON_CONFIG --libs`
+  PYTHON_LIB=`$PYTHON_CONFIG --libs --embed`
   PYTHON_EXEC_PREFIX=`$PYTHON_CONFIG --exec-prefix`
   AC_MSG_RESULT([$PYTHON_INCLUDE])
 ])
@@ -98,35 +88,32 @@ AC_CHECK_SIZEOF(void *)
 # optional bindings for external packages
 
 AC_ARG_WITH(Mutationpp-lib,
-   	AS_HELP_STRING([--with-Mutationpp-lib[=ARG]], [Mutation++ library directory, ARG = path to libmutation++.a]),
-	[with_Mutationpp_lib=$withval], [with_Mutationpp_lib="no"])
+    AS_HELP_STRING([--with-Mutationpp-lib[=ARG]], [Mutation++ library directory, ARG = path to libmutation++.a]),
+  [with_Mutationpp_lib=$withval], [with_Mutationpp_lib="no"])
 AC_ARG_WITH(Mutationpp-include,
-   	AS_HELP_STRING([--with-Mutationpp-include[=ARG]], [Mutation++ include directory, ARG = path to mutation++.h]),
-	[with_Mutationpp_include=$withval], [with_Mutationpp_include="no"])
+    AS_HELP_STRING([--with-Mutationpp-include[=ARG]], [Mutation++ include directory, ARG = path to mutation++.h]),
+  [with_Mutationpp_include=$withval], [with_Mutationpp_include="no"])
 
 # Check for disabling of SU2 modules
 
 AC_ARG_ENABLE(CFD,
-   	AS_HELP_STRING([--disable-CFD], [build the SU2_CFD executable (default = yes)]),
-	[build_CFD=$enableval], [build_CFD="yes"])
+    AS_HELP_STRING([--disable-CFD], [build the SU2_CFD executable (default = yes)]),
+  [build_CFD=$enableval], [build_CFD="yes"])
 AC_ARG_ENABLE(DOT,
    	AS_HELP_STRING([--disable-DOT], [build the SU2_DOT executable (default = yes)]),
 	[build_DOT=$enableval], [build_DOT="yes"])
-AC_ARG_ENABLE(MSH,
-   	AS_HELP_STRING([--disable-MSH], [build the SU2_MSH executable (default = yes)]),
-	[build_MSH=$enableval], [build_MSH="yes"])
 AC_ARG_ENABLE(DEF,
-   	AS_HELP_STRING([--disable-DEF], [build the SU2_DEF executable (default = yes)]),
-	[build_DEF=$enableval], [build_DEF="yes"])
+    AS_HELP_STRING([--disable-DEF], [build the SU2_DEF executable (default = yes)]),
+  [build_DEF=$enableval], [build_DEF="yes"])
 AC_ARG_ENABLE(SOL,
-   	AS_HELP_STRING([--disable-SOL], [build the SU2_SOL executable (default = yes)]),
-	[build_SOL=$enableval], [build_SOL="yes"])
+    AS_HELP_STRING([--disable-SOL], [build the SU2_SOL executable (default = yes)]),
+  [build_SOL=$enableval], [build_SOL="yes"])
 AC_ARG_ENABLE(GEO,
-   	AS_HELP_STRING([--disable-GEO], [build the SU2_GEO executable (default = yes)]),
-	[build_GEO=$enableval], [build_GEO="yes"])
+    AS_HELP_STRING([--disable-GEO], [build the SU2_GEO executable (default = yes)]),
+  [build_GEO=$enableval], [build_GEO="yes"])
 AC_ARG_ENABLE(PY_WRAPPER,
-   	AS_HELP_STRING([--enable-PY_WRAPPER], [wrap the SU2 code with Python (default = no)]),
-	[build_PY_WRAPPER="yes"], [build_PY_WRAPPER="no"])
+    AS_HELP_STRING([--enable-PY_WRAPPER], [wrap the SU2 code with Python (default = no)]),
+  [build_PY_WRAPPER="yes"], [build_PY_WRAPPER="no"])
 
 # Check for data types
 
@@ -156,6 +143,9 @@ su2_externals_LIBPTHREAD=""
 CONFIGURE_TECIO
 if (test $enabletecio = yes); then
   su2_externals_INCLUDES="-DHAVE_TECIO $TECIO_INCLUDE $su2_externals_INCLUDES"
+  if ( test x$have_MPI = xyes ); then
+    su2_externals_INCLUDES="-DTECIOMPI $su2_externals_INCLUDES"
+  fi
   su2_externals_LIBS="$TECIO_LIB $su2_externals_LIBS"
   # Check if boost directory exists, otherwise extract the sources
   if ( ! test -d "$srcdir/externals/tecio/boost" ); then
@@ -172,7 +162,10 @@ else
 fi
 
 AM_CONDITIONAL(BUILD_TECIO, test x$enabletecio = xyes)
+AM_CONDITIONAL(BUILD_TECIOMPI, test x$enabletecio = xyes -a x$have_MPI = xyes)
 AC_CONFIG_FILES([externals/tecio/Makefile])
+AC_CONFIG_FILES([externals/tecio/teciosrc/Makefile])
+AC_CONFIG_FILES([externals/tecio/teciompisrc/Makefile])
 
 # Metis
 CONFIGURE_METIS
@@ -211,42 +204,43 @@ AC_SUBST([su2_externals_INCLUDES])
 AC_SUBST([su2_externals_LIBS])
 AC_SUBST([su2_externals_LIBPTHREAD])
 
+su2_externals_INCLUDES="-I\$(top_srcdir)/externals/CLI11 $su2_externals_INCLUDES"
 
 ##########################
 
 # check for lib
 Mutationpplib=libmutation++.a
 Mutationppheader=mutation++.h
-have_Mutationpp="no"
+have_MPP="no"
 
 if test "$with_Mutationpp_lib" != "no"
 then
-  	AC_CHECK_FILE([$with_Mutationpp_lib/$Mutationpplib],[have_Mutationpp="yes"],[have_Mutationpp="no"])
-	if test "$have_Mutationpp" == "no"
+  	AC_CHECK_FILE([$with_Mutationpp_lib/$Mutationpplib],[have_MPP="yes"],[have_MPP="no"])
+	if test "$have_MPP" == "no"
 	then
 		AC_MSG_ERROR([Mutation++ requested but library file not found.])
 	fi
 fi
 
 # check for header
-if test "$have_Mutationpp" != "no"
+if test "$have_MPP" != "no"
 then
 	if test "$with_Mutationpp_include" != "no"
 	then
-		AC_CHECK_FILE([$with_Mutationpp_include/$Mutationppheader],[have_Mutationpp='yes'],[have_Mutationpp='no'])
-		if test "$have_Mutationpp" == "no"
+		AC_CHECK_FILE([$with_Mutationpp_include/$Mutationppheader],[have_MPP='yes'],[have_MPP='no'])
+		if test "$have_MPP" == "no"
 		then
 			AC_MSG_ERROR([Mutation++ requested but header file not found.])
 		fi
 	else
-		have_Mutationpp="no"
+		have_MPP="no"
 	fi
 fi
 
-if test "$have_Mutationpp" != "no"
+if test "$have_MPP" != "no"
 then
-  	AM_CONDITIONAL(BUILD_MUTATIONPP,true)
-	MUTATIONPP_CXX="-DHAVE_MUTATIONPP -I"$with_Mutationpp_include""
+  	AM_CONDITIONAL(BUILD_MUTATIONPP,true,test x$enablempp = xyes -a x$have_MPP = xyes)
+	MUTATIONPP_CXX="-DHAVE_MPP -I"$with_Mutationpp_include""
 	MUTATIONPP_LD="$with_Mutationpp_lib"/$Mutationpplib
 else
 	AM_CONDITIONAL(BUILD_MUTATIONPP,false)
@@ -298,11 +292,14 @@ AM_CONDITIONAL([BUILD_REVERSE], [test $build_REVERSE != "no"])
 if test $build_NORMAL == "no"
 then
   build_DOT=no
-  build_MSH=no
   build_DEF=no
   build_SOL=no
   build_GEO=no
   build_PY=no
+fi
+
+if test $build_DIRECTDIFF == "yes"
+then
   build_PY_WRAPPER=no
 fi
 
@@ -314,7 +311,6 @@ fi
 
 AM_CONDITIONAL([BUILD_CFD],[test $build_CFD != "no"])
 AM_CONDITIONAL([BUILD_DOT],[test $build_DOT != "no"])
-AM_CONDITIONAL([BUILD_MSH],[test $build_MSH != "no"])
 AM_CONDITIONAL([BUILD_DEF],[test $build_DEF != "no"])
 AM_CONDITIONAL([BUILD_SOL],[test $build_SOL != "no"])
 AM_CONDITIONAL([BUILD_GEO],[test $build_GEO != "no"])
@@ -325,15 +321,14 @@ AM_CONDITIONAL([BUILD_PY_WRAPPER], [test $build_PY_WRAPPER != "no"])
 
 AC_OUTPUT(Makefile \
         externals/Makefile \
-	Common/lib/Makefile \
-	SU2_CFD/obj/Makefile \
-	SU2_DOT/obj/Makefile \
-	SU2_MSH/obj/Makefile \
-	SU2_DEF/obj/Makefile \
-	SU2_SOL/obj/Makefile \
-	SU2_GEO/obj/Makefile \
-	SU2_PY/Makefile \
-	SU2_PY/pySU2/Makefile)
+	      Common/lib/Makefile \
+	      SU2_CFD/obj/Makefile \
+	      SU2_DOT/obj/Makefile \
+	      SU2_DEF/obj/Makefile \
+	      SU2_SOL/obj/Makefile \
+	      SU2_GEO/obj/Makefile \
+	      SU2_PY/Makefile \
+	      SU2_PY/pySU2/Makefile)
 
 abs_srcdir=`(cd $srcdir && pwd)`
 abs_prefix=$prefix #`(cd $prefix && pwd)`
@@ -362,7 +357,7 @@ AC_MSG_RESULT([
 | - Prof. Edwin van der Weide's group at the University of Twente.      |
 | - Lab. of New Concepts in Aeronautics at Tech. Inst. of Aeronautics.  |
 -------------------------------------------------------------------------
-| Copyright 2012-2019, Francisco D. Palacios, Thomas D. Economon,       |
+| Copyright 2012-2020, Francisco D. Palacios, Thomas D. Economon,       |
 |                      Tim Albring, and the SU2 contributors.           |
 |                                                                       |
 | SU2 is free software; you can redistribute it and/or                  |
@@ -394,7 +389,7 @@ Build Configuration Summary:
     Parmetis support:     $enableparmetis
     TecIO support:        $enabletecio
     CGNS support:         $enablecgns
-    Mutation++ support:   $have_Mutationpp
+    Mutation++ support:   $have_MPP
     MKL support:          $have_MKL
     Datatype support:
         double            $build_NORMAL
@@ -407,7 +402,6 @@ Build Configuration Summary:
 
     Build SU2_CFD:        $build_CFD
     Build SU2_DOT:        $build_DOT
-    Build SU2_MSH:        $build_MSH
     Build SU2_DEF:        $build_DEF
     Build SU2_SOL:        $build_SOL
     Build SU2_GEO:        $build_GEO
